@@ -38,7 +38,8 @@ const defaultParams: SimulationParams = {
   monomerDiameter: 5,
   k: 4,
   dt: 0.01,
-  diffusionCoefficient: 1,
+  diffusionCoefficient: 5, // Increased from 1
+  flowVelocity: 20,
   inflowRate: 10,
   inflowInterval: 100,
   inflowStripWidth: 25,

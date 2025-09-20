@@ -122,11 +122,36 @@ function Controls() {
       <div className='stats-display'>
         <h4>Simulation Stats</h4>
         <p>Frame: {stats.frameCount || 0}</p>
+        <p>Active Particles: {stats.activeParticles || 0}</p>
         <p>Monomers: {stats.monomerCount || 0}</p>
         <p>Templates: {stats.templateCount || 0}</p>
       </div>
       <div className='params-editor'>
         <h4>Parameters</h4>
+        <label>
+          Diffusion
+          <input
+            type='range'
+            min='0'
+            max='100'
+            step='0.1'
+            value={params.diffusionCoefficient}
+            onChange={(e) => setParams({ diffusionCoefficient: parseFloat(e.target.value) })}
+          />
+          <span>{params.diffusionCoefficient.toFixed(1)}</span>
+        </label>
+        <label>
+          Flow Velocity
+          <input
+            type='range'
+            min='0'
+            max='100'
+            step='1'
+            value={params.flowVelocity}
+            onChange={(e) => setParams({ flowVelocity: parseFloat(e.target.value) })}
+          />
+          <span>{params.flowVelocity.toFixed(1)}</span>
+        </label>
         <label>
           Release Probability (p_rel)
           <input

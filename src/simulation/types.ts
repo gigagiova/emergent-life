@@ -35,6 +35,7 @@ export interface SimulationParams {
   // Dynamics
   dt: number;
   diffusionCoefficient: number;
+  flowVelocity: number; // Rightward drift for monomers
 
   // Gradient Drive
   inflowRate: number; // N_in: number of monomers to inject
