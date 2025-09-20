@@ -1,91 +1,100 @@
-// src/simulation/types.ts
+/**
+ * This file defines the core data structures and types used in the simulation.
+ * A clear and well-structured type system is essential for managing the complexity
+ * of the particle interactions and state changes.
+ */
+
+// Using a nominal typing pattern to avoid mixing up different kinds of IDs.
+export type ParticleId = number & { readonly __brand: 'ParticleId' };
+export type LineageId = number & { readonly __brand: 'LineageId' };
 
 /**
- * Defines the parameters that control the simulation.
- * These can be adjusted by the user in the UI.
+ * Defines the types of particles that can exist in the simulation.
+ * - Monomer: A basic building block.
+ * - Template: A complex, self-replicating particle.
+ */
+export enum ParticleType {
+  Monomer = 0,
+  Template = 1,
+}
+
+/**
+ * Simulation parameters that can be tuned from the UI.
+ * These control the physics, replication, and environmental drive of the simulation.
  */
 export interface SimulationParams {
   // World dimensions
-  width: number
-  height: number
+  Lx: number;
+  Ly: number;
 
   // Particle properties
-  particleRadius: number
-  k: number // monomers per template
+  particleCount: number;
+  monomerDiameter: number;
+  k: number; // Number of sites on a template
 
   // Dynamics
-  dt: number // simulation time step
-  diffusionCoefficient: number
+  dt: number;
+  diffusionCoefficient: number;
 
-  // Gradient drive
-  inflowRate: number // N_in monomers
-  inflowInterval: number // n_inj steps
-
-  // Template formation and replication
-  captureRadius: number
-  tauCap: number
-  pRel: number // release probability per step
+  // Gradient Drive
+  inflowRate: number; // N_in: number of monomers to inject
+  inflowInterval: number; // n_inj: steps between injections
+  inflowStripWidth: number;
 
   // Spontaneous nucleation (optional)
-  nucleationRadius: number
-  tauNuc: number
+  nucleationEnabled: boolean;
+  nucleationRadius: number; // r_nuc
+  nucleationSteps: number; // tau_nuc
 
-  // Starvation and decay
-  tauStarve: number
-  pDecay: number // decay probability per step
+  // Template Replication
+  captureRadius: number; // r_c
+  captureSteps: number; // tau_cap
+  releaseProb: number; // p_rel
+  coopWindow: number; // ΔT_coop
+
+  // Starvation and Decay
+  starvationSteps: number; // tau_starve
+  decayProb: number; // p_decay
 
   // Mutation
-  mutationRateGeom: number
-  mutationRateKinetics: number
-  kMutationRate: number
-  kMutationStep: number // +1 or -1
-  lineageThreshold: number
+  geomMutationStdDev: number; // σ_geom
+  releaseProbMutationStdDev: number; // σ_rel
+  siteCountMutationProb: number; // μ_k
+  newLinageThreshold: number;
+
+  // Initial seed
+  seedTemplates: number;
 }
 
 /**
- * Represents the state of a single particle.
- * Using a structure-of-arrays layout for performance.
- */
-export type ParticleState = {
-  // Position
-  x: Float32Array
-  y: Float32Array
-  // Type: 0 for monomer, >0 for template ID
-  type: Int32Array
-  // For templates, the angle
-  angle: Float32Array
-  // For templates, lineage ID
-  lineageId: Int32Array
-}
-
-/**
- * The full state of the simulation at a given time.
- * This is what's sent from the worker to the main thread for rendering.
+ * Data sent from the worker to the main thread for rendering.
+ * positions is a transferable object for performance.
  */
 export interface SimulationState {
-  particles: ParticleState
-  particleCount: number
-  // Additional stats for visualization
-  stats: {
-    timestamp: number
-    monomerCount: number
-    templateCount: number
-    lineageCount: number
-  }
+  // Using Float32Array for continuous data and Uint32Array for discrete data.
+  // This data is structured for efficient rendering.
+  positions: Float32Array; // [x1, y1, x2, y2, ...]
+  types: Uint8Array; // [type1, type2, ...]
+  lineageIds: Uint32Array; // [lineageId1, lineageId2, ...]
+  diameters: Float32Array; // [d1, d2, ...]
+  stats: Record<string, number>;
 }
 
 /**
- * Messages sent from the main thread to the worker.
+ * Defines the messages that can be sent *to* the simulation worker.
+ * This is the command interface for controlling the simulation.
  */
 export type WorkerCommand =
-  | { type: 'start'; params: SimulationParams }
+  | { type: 'init'; params: SimulationParams }
+  | { type: 'start' }
   | { type: 'stop' }
   | { type: 'reset' }
-  | { type: 'updateParams'; params: Partial<SimulationParams> }
+  | { type: 'setParams'; params: Partial<SimulationParams> };
 
 /**
- * Messages sent from the worker to the main thread.
+ * Defines the messages that can be sent *from* the simulation worker.
+ * This is how the worker communicates its state back to the main thread.
  */
-export type WorkerResponse =
-  | { type: 'update'; state: SimulationState }
-  | { type: 'ready' }
+export type WorkerEvent =
+  | { type: 'initialized' }
+  | { type: 'stateUpdate'; state: SimulationState };
