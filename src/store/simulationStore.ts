@@ -38,21 +38,29 @@ const defaultParams: SimulationParams = {
   Ly: 600,
   
   // Particle counts
-  particleCountA: 100,
-  particleCountB: 100,
-  particleCountC: 0,
-  particleCountD: 0,
-  particleCountE: 0,
-  energyParticleCount: 200,
+  particleCountA: 50,
+  particleCountB: 50,
+  particleCountC: 50,
+  particleCountD: 50,
+  particleCountBinder: 20,
+  energyParticleCount: 250,
   
   // Particle properties
   particleDiameter: 8,
   
   // Dynamics
   timeStep: 0.02,
-  diffusionCoefficient: 3,
-  energyFlowVelocity: 30,        // How fast energy particles move rightward
-  energyInflowRate: 3,           // Energy particles spawned per inflow event
+  diffusionCoefficient: 5, // Increased random motion
+  energyFlowVelocity: 80, // Faster base speed for energy
+  energyInflowRate: 4,           // Energy particles spawned per inflow event
+  energyTurbulence: 0.5, // Significant vertical motion
+  
+  // Physics & Lifespan
+  primordialWindStrength: 0.02, // A gentle but constant outward push
+  windShelterRadius: 30, // 2x reaction radius
+  binderAttractionForce: 40, // Drastically increased to overcome diffusion
+  substrateRepulsionForce: 50, // Drastically increased to ensure spreading
+  particleLifespan: 300, // Shorter lifespan increases pressure
   
   // Reactions
   reactionRadius: 15,            // How close particles need to be to react
@@ -63,8 +71,8 @@ const defaultParams: SimulationParams = {
   // Mutation
   mutationProbability: 0.02,     // Chance a new particle mutates to the other type
   
-  // Decay
-  particleDecayRate: 0.001,      // Spontaneous decay rate (prevents runaway growth)
+  // Decay (No longer used, replaced by lifespan)
+  particleDecayRate: 0.0,
 };
 
 export const useSimulationStore = create<SimulationStore>((set, get) => ({

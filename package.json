@@ -12,6 +12,7 @@
   "dependencies": {
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "simplex-noise": "^4.0.3",
     "zustand": "^5.0.8"
   },
   "devDependencies": {

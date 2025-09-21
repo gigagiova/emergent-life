@@ -83,8 +83,8 @@ function SimulationCanvas() {
         context.fillStyle = `rgba(50, 255, 50, ${Math.max(0.3, energy)})`; // Green
       } else if (type === ParticleType.D) {
         context.fillStyle = `rgba(200, 50, 255, ${Math.max(0.3, energy)})`; // Purple
-      } else if (type === ParticleType.E) {
-        context.fillStyle = `rgba(255, 150, 50, ${Math.max(0.3, energy)})`; // Orange
+      } else if (type === ParticleType.Binder) {
+        context.fillStyle = `rgba(200, 200, 200, ${Math.max(0.3, energy)})`; // White/Gray
       } else if (type === ParticleType.Energy) {
         context.fillStyle = 'rgba(255, 255, 100, 0.9)';
       }
@@ -122,7 +122,7 @@ function Controls() {
         <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(255, 50, 50)' }}></span>B Particles: {stats.particleCountB || 0}</p>
         <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(50, 255, 50)' }}></span>C Particles: {stats.particleCountC || 0}</p>
         <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(200, 50, 255)' }}></span>D Particles: {stats.particleCountD || 0}</p>
-        <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(255, 150, 50)' }}></span>E Particles: {stats.particleCountE || 0}</p>
+        <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(200, 200, 200)' }}></span>Binder Particles: {stats.particleCountBinder || 0}</p>
         <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(255, 255, 100)' }}></span>Energy: {stats.energyParticleCount || 0}</p>
         <p>Total Reactions: {stats.totalReactions || 0}</p>
         <p>Discovered Reactions: {stats.discoveredReactions || 0}</p>
@@ -158,6 +158,53 @@ function Controls() {
             onChange={(e) => setParams({ energyInflowRate: parseInt(e.target.value) })}
           />
           <span>{params.energyInflowRate}</span>
+        </label>
+
+        <h4>Physics & Lifespan</h4>
+        <label>
+          Primordial Wind
+          <input
+            type='range' min='0' max='0.1' step='0.001'
+            value={params.primordialWindStrength}
+            onChange={(e) => setParams({ primordialWindStrength: parseFloat(e.target.value) })}
+          />
+          <span>{params.primordialWindStrength.toFixed(3)}</span>
+        </label>
+        <label>
+          Wind Shelter Radius
+          <input
+            type='range' min='10' max='100' step='1'
+            value={params.windShelterRadius}
+            onChange={(e) => setParams({ windShelterRadius: parseInt(e.target.value) })}
+          />
+          <span>{params.windShelterRadius}</span>
+        </label>
+        <label>
+          Binder Attraction
+          <input
+            type='range' min='0' max='1' step='0.01'
+            value={params.binderAttractionForce}
+            onChange={(e) => setParams({ binderAttractionForce: parseFloat(e.target.value) })}
+          />
+          <span>{params.binderAttractionForce.toFixed(2)}</span>
+        </label>
+        <label>
+          Substrate Repulsion
+          <input
+            type='range' min='0' max='1' step='0.01'
+            value={params.substrateRepulsionForce}
+            onChange={(e) => setParams({ substrateRepulsionForce: parseFloat(e.target.value) })}
+          />
+          <span>{params.substrateRepulsionForce.toFixed(2)}</span>
+        </label>
+        <label>
+          Particle Lifespan
+          <input
+            type='range' min='100' max='2000' step='50'
+            value={params.particleLifespan}
+            onChange={(e) => setParams({ particleLifespan: parseInt(e.target.value) })}
+          />
+          <span>{params.particleLifespan}</span>
         </label>
 
         <h4>Reactions</h4>

@@ -18,7 +18,7 @@ export const ParticleType = {
   B: 1,
   C: 2,
   D: 3,
-  E: 4,
+  Binder: 4, // The special "sticky" particle
   Energy: 5,
 } as const;
 export type ParticleType = typeof ParticleType[keyof typeof ParticleType];
@@ -48,7 +48,7 @@ export interface SimulationParams {
   particleCountB: number;
   particleCountC: number;
   particleCountD: number;
-  particleCountE: number;
+  particleCountBinder: number;
   energyParticleCount: number;
   
   // Particle properties
@@ -59,6 +59,14 @@ export interface SimulationParams {
   diffusionCoefficient: number;
   energyFlowVelocity: number;        // How fast energy particles move rightward
   energyInflowRate: number;          // Energy particles spawned per inflow event
+  energyTurbulence: number; // How much energy particles swerve vertically
+  
+  // Physics & Lifespan
+  primordialWindStrength: number; // Outward push from the center
+  windShelterRadius: number; // Radius for checking binder density to reduce wind
+  binderAttractionForce: number;
+  substrateRepulsionForce: number;
+  particleLifespan: number; // In simulation steps
   
   // Reactions
   reactionRadius: number;            // How close particles need to be to react
@@ -86,7 +94,7 @@ export interface SimulationState {
     particleCountB: number;
     particleCountC: number;
     particleCountD: number;
-    particleCountE: number;
+    particleCountBinder: number;
     energyParticleCount: number;
     totalReactions: number;
     discoveredReactions: number;

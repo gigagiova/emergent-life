@@ -35,28 +35,20 @@ abstract class Particle {
 export class SubstrateParticle extends Particle {
   public energy: number = 0; // Internal energy for visualization
   public type: ParticleType;
+  public lifespan: number; // Ticks down each step
 
-  constructor(id: ParticleId, x: number, y: number, type: ParticleType) {
+  constructor(id: ParticleId, x: number, y: number, type: ParticleType, initialLifespan: number) {
     super(id, x, y);
     this.type = type;
+    this.lifespan = initialLifespan;
   }
 
-  update(params: SimulationParams, Lx: number, Ly: number): void {
-    // Simple Brownian motion
-    this.brownianStep(params);
-    
-    // Apply periodic boundary conditions in Y
-    if (this.y < 0) this.y += Ly;
-    if (this.y > Ly) this.y -= Ly;
-    
-    // Remove particles that drift too far out in X
-    if (this.x < -50 || this.x > Lx + 50) {
-      this.active = false;
-    }
-    
-    // Spontaneous decay to prevent runaway growth
-    if (Math.random() < params.particleDecayRate * params.timeStep) {
-      this.active = false;
+  update(): void {
+    // Lifespan decay is the primary internal update.
+    // Movement (diffusion, forces) is handled by the main simulation loop.
+    this.lifespan--;
+    if (this.lifespan <= 0) {
+      this.active = false; // Particle "dissolves"
     }
   }
 }
@@ -66,10 +58,12 @@ export class SubstrateParticle extends Particle {
  */
 export class EnergyParticle extends Particle {
   update(params: SimulationParams, Lx: number, Ly: number): void {
-    // Strong rightward flow with some diffusion
-    const diffusionStep = Math.sqrt(2 * params.diffusionCoefficient * params.timeStep);
-    this.x += params.energyFlowVelocity * params.timeStep + diffusionStep * (Math.random() - 0.5);
-    this.y += diffusionStep * (Math.random() - 0.5) * 2;
+    // Strong rightward flow with added vertical turbulence
+    const horizontalMovement = params.energyFlowVelocity * params.timeStep;
+    const verticalMovement = (Math.random() - 0.5) * params.energyTurbulence * horizontalMovement;
+
+    this.x += horizontalMovement;
+    this.y += verticalMovement;
     
     // Apply periodic boundary conditions in Y
     if (this.y < 0) this.y += Ly;
