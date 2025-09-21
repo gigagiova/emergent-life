@@ -37,7 +37,7 @@ const defaultParams: SimulationParams = {
   particleCount: 2000,
   monomerDiameter: 5,
   k: 4,
-  dt: 0.01,
+  timeStep: 0.01,
   diffusionCoefficient: 5, // Increased from 1
   flowVelocity: 20,
   inflowRate: 10,

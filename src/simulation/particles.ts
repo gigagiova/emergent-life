@@ -22,9 +22,8 @@ export abstract class Particle {
   /**
    * Updates the particle's position based on Brownian motion and other forces.
    * @param params Simulation parameters
-   * @param dt Time step
    */
-  abstract update(params: SimulationParams, dt: number): void
+  abstract update(params: SimulationParams): void
 
   /**
    * Returns the particle type for rendering and logic purposes.
@@ -77,14 +76,14 @@ export class Monomer extends Particle {
     super(id, x, y, 0)
   }
 
-  update(params: SimulationParams, dt: number): void {
-    const diffusionStep = Math.sqrt(2 * params.diffusionCoefficient * dt)
+  update(params: SimulationParams): void {
+    const diffusionStep = Math.sqrt(2 * params.diffusionCoefficient * params.timeStep)
     
     // Brownian motion with rightward bias
     const brownianX = diffusionStep * (Math.random() - 0.5) * 2
     const brownianY = diffusionStep * (Math.random() - 0.5) * 2
     
-    this.x += brownianX + params.flowVelocity * dt
+    this.x += brownianX + params.flowVelocity * params.timeStep
     this.y += brownianY
   }
 
@@ -140,8 +139,8 @@ export class Template extends Particle {
     this.captureTimers = new Array(this.k).fill(0)
   }
 
-  update(params: SimulationParams, dt: number): void {
-    const diffusionStep = Math.sqrt(2 * params.diffusionCoefficient * dt)
+  update(params: SimulationParams): void {
+    const diffusionStep = Math.sqrt(2 * params.diffusionCoefficient * params.timeStep)
     
     // Templates move with pure Brownian motion (no bias)
     this.x += diffusionStep * (Math.random() - 0.5) * 2

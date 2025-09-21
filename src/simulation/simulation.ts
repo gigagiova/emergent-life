@@ -62,9 +62,10 @@ export class Simulation {
   /**
    * Updates the spatial grid with current particle positions.
    */
-  private updateSpatialGrid(): void {
+  private populateSpatialGrid(): void {
     this.grid.clear()
     
+    // Locates each particle in a discrete grid cell
     for (const [id, particle] of this.particles) {
       if (!particle.active) continue
       
@@ -72,9 +73,10 @@ export class Simulation {
       const cellY = Math.floor(particle.y / this.gridCellSize)
       const cellKey = `${cellX},${cellY}`
       
-      if (!this.grid.has(cellKey)) {
-        this.grid.set(cellKey, [])
-      }
+      // Lazily initialize the grid cell to store particles
+      if (!this.grid.has(cellKey)) this.grid.set(cellKey, [])
+
+      // Add the particle to the grid cell
       this.grid.get(cellKey)!.push(id)
     }
   }
@@ -247,14 +249,16 @@ export class Simulation {
     this.frameCount++
 
     // Update spatial grid
-    this.updateSpatialGrid()
+    this.populateSpatialGrid()
 
     // Update all particle positions
     for (const particle of this.particles.values()) {
-      if (particle.active) {
-        particle.update(this.params, this.params.dt)
-        particle.applyBoundaryConditions(this.params)
-      }
+  
+      // Skip inactive particles
+      if (!particle.active) continue
+
+      particle.update(this.params)
+      particle.applyBoundaryConditions(this.params)
     }
 
     // Handle particle interactions

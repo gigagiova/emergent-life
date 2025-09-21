@@ -1,8 +1,4 @@
-import type {
-  SimulationParams,
-  WorkerCommand,
-  WorkerEvent,
-} from './types'
+import type { SimulationParams, WorkerCommand, WorkerEvent } from './types'
 import { Simulation } from './simulation'
 
 // The simulation instance manages all state
@@ -14,24 +10,17 @@ let animationFrameId: number | null = null
  * Posts a message back to the main thread.
  */
 const post = (event: WorkerEvent, transferables?: Transferable[]) => {
-  if (transferables && transferables.length > 0) {
-    self.postMessage(event, { transfer: transferables })
-  } else {
-    self.postMessage(event)
-  }
+  if (transferables && transferables.length > 0) self.postMessage(event, { transfer: transferables })
+  else self.postMessage(event)
 }
 
 /**
  * Initializes the simulation with the given parameters.
  */
 function init(params: SimulationParams): void {
-  try {
-    simulation = new Simulation(params)
-    console.log('Simulation worker initialized with OOP structure.')
-    post({ type: 'initialized' })
-  } catch (error) {
-    console.error('Failed to initialize simulation:', error)
-  }
+  simulation = new Simulation(params)
+  console.log('Simulation worker initialized with OOP structure.')
+  post({ type: 'initialized' })
 }
 
 /**

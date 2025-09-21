@@ -35,7 +35,7 @@ export interface SimulationParams {
   k: number; // Number of sites on a template
 
   // Dynamics
-  dt: number;
+  timeStep: number;
   diffusionCoefficient: number;
   flowVelocity: number; // Rightward drift for monomers
 
