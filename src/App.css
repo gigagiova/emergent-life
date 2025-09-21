@@ -161,3 +161,22 @@ button:disabled {
 .config-graph {
   flex-shrink: 0;
 }
+
+.stats-display p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+  font-size: 0.9em;
+}
+
+.particle-color-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.params-editor {
+  margin-top: 20px;
+}

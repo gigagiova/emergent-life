@@ -118,12 +118,12 @@ function Controls() {
       <div className='stats-display'>
         <h4>System Stats</h4>
         <p>Frame: {stats.frameCount || 0}</p>
-        <p>A Particles: {stats.particleCountA || 0}</p>
-        <p>B Particles: {stats.particleCountB || 0}</p>
-        <p>C Particles: {stats.particleCountC || 0}</p>
-        <p>D Particles: {stats.particleCountD || 0}</p>
-        <p>E Particles: {stats.particleCountE || 0}</p>
-        <p>Energy: {stats.energyParticleCount || 0}</p>
+        <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(50, 100, 255)' }}></span>A Particles: {stats.particleCountA || 0}</p>
+        <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(255, 50, 50)' }}></span>B Particles: {stats.particleCountB || 0}</p>
+        <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(50, 255, 50)' }}></span>C Particles: {stats.particleCountC || 0}</p>
+        <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(200, 50, 255)' }}></span>D Particles: {stats.particleCountD || 0}</p>
+        <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(255, 150, 50)' }}></span>E Particles: {stats.particleCountE || 0}</p>
+        <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(255, 255, 100)' }}></span>Energy: {stats.energyParticleCount || 0}</p>
         <p>Total Reactions: {stats.totalReactions || 0}</p>
         <p>Discovered Reactions: {stats.discoveredReactions || 0}</p>
       </div>
