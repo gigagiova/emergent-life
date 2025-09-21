@@ -13,10 +13,12 @@ export type LineageId = number & { readonly __brand: 'LineageId' };
  * - Monomer: A basic building block.
  * - Template: A complex, self-replicating particle.
  */
-export enum ParticleType {
-  Monomer = 0,
-  Template = 1,
-}
+export const ParticleType = {
+  Monomer: 0,
+  Template: 1,
+} as const
+
+export type ParticleType = typeof ParticleType[keyof typeof ParticleType]
 
 /**
  * Simulation parameters that can be tuned from the UI.
