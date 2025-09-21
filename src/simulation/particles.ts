@@ -1,264 +1,83 @@
-import type { ParticleId, LineageId, SimulationParams } from './types'
-import { ParticleType } from './types'
+import type { ParticleId, SimulationParams } from './types';
+import { ParticleType } from './types';
 
 /**
- * Base class for all particles in the simulation.
- * Provides common properties and behaviors shared by monomers and templates.
+ * Base particle class with common properties
  */
-export abstract class Particle {
-  public id: ParticleId
-  public x: number
-  public y: number
-  public angle: number
-  public active: boolean = true
+abstract class Particle {
+  public id: ParticleId;
+  public x: number;
+  public y: number;
+  public active: boolean = true;
 
-  constructor(id: ParticleId, x: number, y: number, angle: number = 0) {
-    this.id = id
-    this.x = x
-    this.y = y
-    this.angle = angle
-  }
-
-  /**
-   * Updates the particle's position based on Brownian motion and other forces.
-   * @param params Simulation parameters
-   */
-  abstract update(params: SimulationParams): void
-
-  /**
-   * Returns the particle type for rendering and logic purposes.
-   */
-  abstract getType(): ParticleType
-
-  /**
-   * Returns the particle's diameter for collision detection and rendering.
-   */
-  getDiameter(params: SimulationParams): number {
-    return params.monomerDiameter
-  }
-
-  /**
-   * Applies boundary conditions to the particle.
-   * @param params Simulation parameters
-   * @returns true if particle should be removed (went out of bounds)
-   */
-  applyBoundaryConditions(params: SimulationParams): boolean {
-    // Open boundaries - remove particles that exit on any edge
-    if (this.x > params.Lx || this.x < 0 || this.y > params.Ly || this.y < 0) {
-      this.active = false
-      return true
-    }
-    return false
-  }
-
-  /**
-   * Checks if this particle collides with another particle.
-   */
-  collidesWith(other: Particle, params: SimulationParams): boolean {
-    const dx = this.x - other.x
-    const dy = this.y - other.y
-    const distance = Math.sqrt(dx * dx + dy * dy)
-    const minDistance = (this.getDiameter(params) + other.getDiameter(params)) / 2
-    return distance < minDistance
-  }
-}
-
-/**
- * A monomer particle - the basic building block of the simulation.
- * Monomers drift rightward and can be captured by templates.
- */
-export class Monomer extends Particle {
   constructor(id: ParticleId, x: number, y: number) {
-    super(id, x, y, 0)
+    this.id = id;
+    this.x = x;
+    this.y = y;
   }
 
-  update(params: SimulationParams): void {
-    const diffusionStep = Math.sqrt(2 * params.diffusionCoefficient * params.timeStep)
-    
-    // Brownian motion
-    const brownianX = diffusionStep * (Math.random() - 0.5) * 2
-    const brownianY = diffusionStep * (Math.random() - 0.5) * 2
-    
-    // Set motion including a rightward bias to simulate flow
-    this.x += brownianX + params.flowVelocity * params.timeStep
-    this.y += brownianY
+  /**
+   * Update particle position with Brownian motion
+   */
+  protected brownianStep(params: SimulationParams): void {
+    const diffusionStep = Math.sqrt(2 * params.diffusionCoefficient * params.timeStep);
+    this.x += diffusionStep * (Math.random() - 0.5) * 2;
+    this.y += diffusionStep * (Math.random() - 0.5) * 2;
   }
 
-  getType(): ParticleType {
-    return ParticleType.Monomer
+  abstract update(params: SimulationParams, Lx: number, Ly: number): void;
+}
+
+/**
+ * A generic particle class for the substrate/product types (A, B, C, D, E).
+ * Their specific behavior is determined by the reaction catalog in the main simulation.
+ */
+export class SubstrateParticle extends Particle {
+  public energy: number = 0; // Internal energy for visualization
+  public type: ParticleType;
+
+  constructor(id: ParticleId, x: number, y: number, type: ParticleType) {
+    super(id, x, y);
+    this.type = type;
+  }
+
+  update(params: SimulationParams, Lx: number, Ly: number): void {
+    // Simple Brownian motion
+    this.brownianStep(params);
+    
+    // Apply periodic boundary conditions in Y
+    if (this.y < 0) this.y += Ly;
+    if (this.y > Ly) this.y -= Ly;
+    
+    // Remove particles that drift too far out in X
+    if (this.x < -50 || this.x > Lx + 50) {
+      this.active = false;
+    }
+    
+    // Spontaneous decay to prevent runaway growth
+    if (Math.random() < params.particleDecayRate * params.timeStep) {
+      this.active = false;
+    }
   }
 }
 
 /**
- * A template particle - a self-replicating structure.
- * Templates can capture monomers, replicate, and undergo mutation.
+ * Energy particle - flows from left to right, powers reactions
  */
-export class Template extends Particle {
-  public readonly lineageId: LineageId
-  public readonly k: number // Number of capture sites
-  public readonly captureRadius: number
-  public readonly releaseProb: number
-  
-  // Capture site positions relative to template center
-  public readonly captureOffsets: Array<{ dx: number; dy: number }>
-  
-  // State for replication process
-  public capturedMonomers: (Monomer | null)[] = []
-  public captureTimers: number[] = []
-  public starvationTimer: number = 0
-
-  constructor(
-    id: ParticleId,
-    x: number,
-    y: number,
-    angle: number,
-    lineageId: LineageId,
-    params: SimulationParams
-  ) {
-    super(id, x, y, angle)
-    this.lineageId = lineageId
-    this.k = params.k
-    this.captureRadius = params.captureRadius
-    this.releaseProb = params.releaseProb
+export class EnergyParticle extends Particle {
+  update(params: SimulationParams, Lx: number, Ly: number): void {
+    // Strong rightward flow with some diffusion
+    const diffusionStep = Math.sqrt(2 * params.diffusionCoefficient * params.timeStep);
+    this.x += params.energyFlowVelocity * params.timeStep + diffusionStep * (Math.random() - 0.5);
+    this.y += diffusionStep * (Math.random() - 0.5) * 2;
     
-    // Initialize capture sites in a regular polygon
-    this.captureOffsets = []
-    for (let i = 0; i < this.k; i++) {
-      const siteAngle = (2 * Math.PI * i) / this.k
-      this.captureOffsets.push({
-        dx: this.captureRadius * Math.cos(siteAngle),
-        dy: this.captureRadius * Math.sin(siteAngle)
-      })
+    // Apply periodic boundary conditions in Y
+    if (this.y < 0) this.y += Ly;
+    if (this.y > Ly) this.y -= Ly;
+    
+    // Remove energy particles that exit the right boundary
+    if (this.x > Lx) {
+      this.active = false;
     }
-    
-    // Initialize capture state
-    this.capturedMonomers = new Array(this.k).fill(null)
-    this.captureTimers = new Array(this.k).fill(0)
-  }
-
-  update(params: SimulationParams): void {
-    const diffusionStep = Math.sqrt(2 * params.diffusionCoefficient * params.timeStep)
-    
-    // Templates move with pure Brownian motion (no bias)
-    this.x += diffusionStep * (Math.random() - 0.5) * 2
-    this.y += diffusionStep * (Math.random() - 0.5) * 2
-    
-    // Rotate slightly for more realistic behavior
-    this.angle += 0.1 * (Math.random() - 0.5)
-  }
-
-  getType(): ParticleType {
-    return ParticleType.Template
-  }
-
-  /**
-   * Gets the global positions of all capture sites.
-   */
-  getCaptureSites(): Array<{ x: number; y: number; occupied: boolean }> {
-    return this.captureOffsets.map((offset, i) => ({
-      x: this.x + offset.dx * Math.cos(this.angle) - offset.dy * Math.sin(this.angle),
-      y: this.y + offset.dx * Math.sin(this.angle) + offset.dy * Math.cos(this.angle),
-      occupied: this.capturedMonomers[i] !== null
-    }))
-  }
-
-  /**
-   * Attempts to capture a monomer at the specified site index.
-   * @param siteIndex Index of the capture site
-   * @param monomer Monomer to capture
-   * @param params Simulation parameters
-   * @returns true if capture was successful
-   */
-  attemptCapture(siteIndex: number, monomer: Monomer, params: SimulationParams): boolean {
-    if (this.capturedMonomers[siteIndex] !== null) return false
-    
-    const sites = this.getCaptureSites()
-    const site = sites[siteIndex]
-    const dx = monomer.x - site.x
-    const dy = monomer.y - site.y
-    const distance = Math.sqrt(dx * dx + dy * dy)
-    
-    if (distance < this.captureRadius) {
-      this.captureTimers[siteIndex]++
-      if (this.captureTimers[siteIndex] >= params.captureSteps) {
-        this.capturedMonomers[siteIndex] = monomer
-        monomer.active = false // Remove from free particle pool
-        return true
-      }
-    } else {
-      this.captureTimers[siteIndex] = 0 // Reset timer if monomer moves away
-    }
-    
-    return false
-  }
-
-  /**
-   * Checks if all sites are captured and ready for replication.
-   */
-  isReadyForReplication(): boolean {
-    return this.capturedMonomers.every(m => m !== null)
-  }
-
-  /**
-   * Attempts to release the completed replica.
-   * @param params Simulation parameters
-   * @returns new Template if release was successful, null otherwise
-   */
-  attemptRelease(params: SimulationParams): Template | null {
-    if (!this.isReadyForReplication()) return null
-    
-    if (Math.random() < this.releaseProb) {
-      // Create child template
-      const childX = this.x + params.monomerDiameter * 2 // Place next to parent
-      const childY = this.y
-      const childAngle = this.angle + (Math.random() - 0.5) * 0.2 // Small angular mutation
-      
-      const child = new Template(
-        -1 as ParticleId, // Will be assigned proper ID by simulation
-        childX,
-        childY,
-        childAngle,
-        this.lineageId, // Inherit lineage (mutation handling would go here)
-        params
-      )
-      
-      // Reset parent's capture state
-      this.capturedMonomers.fill(null)
-      this.captureTimers.fill(0)
-      this.starvationTimer = 0
-      
-      return child
-    }
-    
-    return null
-  }
-
-  /**
-   * Updates starvation timer and checks for decay.
-   * @param params Simulation parameters
-   * @returns true if template should decay into monomers
-   */
-  updateStarvation(params: SimulationParams): boolean {
-
-    // Checks if any sites are captured
-    const hasAnyCapture = this.capturedMonomers.some(m => m !== null)
-    
-    if (!hasAnyCapture) {
-      this.starvationTimer++
-      if (this.starvationTimer >= params.starvationSteps) {
-
-        // Checks if template should decay into monomers
-        if (Math.random() < params.decayProb) {
-
-          // Template decays - create k monomers at its position
-          this.active = false
-          return true
-        }
-      }
-    } else {
-      this.starvationTimer = 0
-    }
-    
-    return false
   }
 }

@@ -103,3 +103,61 @@ button:disabled {
   font-size: 0.9em;
   color: #aaa;
 }
+
+.template-ledger {
+  margin-top: 1.5rem;
+  border-top: 1px solid #444;
+  padding-top: 1rem;
+}
+
+.template-ledger h4 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.config-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.config-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  font-size: 0.8em;
+}
+
+.config-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.config-info {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.config-name {
+  font-weight: 500;
+  margin-bottom: 0.2rem;
+}
+
+.config-count {
+  color: #aaa;
+  margin-bottom: 0.2rem;
+}
+
+.config-structure {
+  color: #888;
+  font-size: 0.7em;
+}
+
+.config-graph {
+  flex-shrink: 0;
+}

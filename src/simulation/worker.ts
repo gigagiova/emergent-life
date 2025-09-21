@@ -35,16 +35,15 @@ function tick(): void {
     simulation.step()
 
     // Export state for rendering
-    const state = simulation.exportState()
+    const state = simulation.exportState();
     post(
       { type: 'stateUpdate', state },
       [
         state.positions.buffer,
         state.types.buffer,
-        state.lineageIds.buffer,
-        state.diameters.buffer
+        state.energies.buffer,
       ]
-    )
+    );
 
     // Schedule next frame
     if (simulationRunning) {

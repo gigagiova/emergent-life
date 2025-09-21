@@ -3,7 +3,7 @@ import type {
   SimulationParams,
   SimulationState,
   WorkerCommand,
-} from '../simulation/types'
+} from '../simulation/types.js'
 
 // Initialize the simulation worker.
 const worker = new Worker(new URL('../simulation/worker.ts', import.meta.url), {
@@ -31,33 +31,41 @@ interface SimulationStore {
   setParams: (newParams: Partial<SimulationParams>) => void
 }
 
+// Default simulation parameters for autocatalytic system
 const defaultParams: SimulationParams = {
-  Lx: 600,
-  Ly: 300,
-  particleCount: 2000,
-  monomerDiameter: 5,
-  k: 4,
-  timeStep: 0.01,
-  diffusionCoefficient: 5, // Increased from 1
-  flowVelocity: 20,
-  inflowRate: 10,
-  inflowInterval: 100,
-  inflowStripWidth: 25,
-  nucleationEnabled: false,
-  nucleationRadius: 9, // 1.8 * 5
-  nucleationSteps: 30,
-  captureRadius: 7, // 1.4 * 5
-  captureSteps: 10,
-  releaseProb: 0.05,
-  coopWindow: 10,
-  starvationSteps: 2000,
-  decayProb: 0.01,
-  geomMutationStdDev: 0.25, // 0.05 * 5
-  releaseProbMutationStdDev: 0.1,
-  siteCountMutationProb: 0.005,
-  newLinageThreshold: 0.5,
-  seedTemplates: 5,
-}
+  // World dimensions
+  Lx: 800,
+  Ly: 600,
+  
+  // Particle counts
+  particleCountA: 100,
+  particleCountB: 100,
+  particleCountC: 0,
+  particleCountD: 0,
+  particleCountE: 0,
+  energyParticleCount: 200,
+  
+  // Particle properties
+  particleDiameter: 8,
+  
+  // Dynamics
+  timeStep: 0.02,
+  diffusionCoefficient: 3,
+  energyFlowVelocity: 30,        // How fast energy particles move rightward
+  energyInflowRate: 3,           // Energy particles spawned per inflow event
+  
+  // Reactions
+  reactionRadius: 15,            // How close particles need to be to react
+  reactionDiscoveryProbability: 0.001, // Very low chance to discover a new reaction pathway
+  reactionProbability: 0.1,      // Chance of reaction when A+B+Energy are close
+  energyRequiredPerReaction: 1,  // Energy cost for each reaction
+  
+  // Mutation
+  mutationProbability: 0.02,     // Chance a new particle mutates to the other type
+  
+  // Decay
+  particleDecayRate: 0.001,      // Spontaneous decay rate (prevents runaway growth)
+};
 
 export const useSimulationStore = create<SimulationStore>((set, get) => ({
   // Initial state
@@ -69,7 +77,7 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
 
   // Actions implementation
   init: () => {
-    worker.postMessage({ type: 'init', params: get().params } as WorkerCommand)
+    worker.postMessage({ type: 'init', params: get().params } as WorkerCommand);
   },
   start: () => {
     worker.postMessage({ type: 'start' } as WorkerCommand)
@@ -89,12 +97,12 @@ export const useSimulationStore = create<SimulationStore>((set, get) => ({
 }))
 
 // Listen for messages from the worker and update the store accordingly.
-worker.onmessage = (e) => {
+worker.onmessage = (e: MessageEvent) => {
   const { type, state } = e.data
   if (type === 'initialized') {
     useSimulationStore.setState({ isInitialized: true })
   }
   if (type === 'stateUpdate' && state) {
-    useSimulationStore.setState({ simulationState: state, stats: state.stats })
+    useSimulationStore.setState({ simulationState: state, stats: state.stats });
   }
-}
+};

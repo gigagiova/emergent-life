@@ -1,91 +1,102 @@
 /**
- * This file defines the core data structures and types used in the simulation.
- * A clear and well-structured type system is essential for managing the complexity
- * of the particle interactions and state changes.
+ * This file defines the core data structures and types for the autocatalytic simulation.
+ * 
+ * System: Minimal Autocatalytic Sets
+ * - Type A particles (blue) 
+ * - Type B particles (red)
+ * - Energy carriers (yellow, flow left to right)
+ * - Reactions: A + B + Energy → 2A, B + A + Energy → 2B
  */
 
-// Using a nominal typing pattern to avoid mixing up different kinds of IDs.
-export type ParticleId = number & { readonly __brand: 'ParticleId' };
-export type LineageId = number & { readonly __brand: 'LineageId' };
+export type ParticleId = number;
 
 /**
- * Defines the types of particles that can exist in the simulation.
- * - Monomer: A basic building block.
- * - Template: A complex, self-replicating particle.
+ * Particle types in the autocatalytic system
  */
 export const ParticleType = {
-  Monomer: 0,
-  Template: 1,
-} as const
+  A: 0,
+  B: 1,
+  C: 2,
+  D: 3,
+  E: 4,
+  Energy: 5,
+} as const;
+export type ParticleType = typeof ParticleType[keyof typeof ParticleType];
 
-export type ParticleType = typeof ParticleType[keyof typeof ParticleType]
+/**
+ * Defines a reaction in the autocatalytic system.
+ */
+export interface Reaction {
+  reactant1: ParticleType;
+  reactant2: ParticleType;
+  catalyst: ParticleType; // Must be one of the reactants
+  product1: ParticleType;
+  product2: ParticleType;
+  efficiency: number; // 0.0 to 1.0, determines reaction probability
+}
 
 /**
  * Simulation parameters that can be tuned from the UI.
- * These control the physics, replication, and environmental drive of the simulation.
  */
 export interface SimulationParams {
   // World dimensions
   Lx: number;
   Ly: number;
-
+  
+  // Particle counts
+  particleCountA: number;
+  particleCountB: number;
+  particleCountC: number;
+  particleCountD: number;
+  particleCountE: number;
+  energyParticleCount: number;
+  
   // Particle properties
-  particleCount: number;
-  monomerDiameter: number;
-  k: number; // Number of sites on a template
-
+  particleDiameter: number;
+  
   // Dynamics
   timeStep: number;
   diffusionCoefficient: number;
-  flowVelocity: number; // Rightward drift for monomers
-
-  // Gradient Drive
-  inflowRate: number; // N_in: number of monomers to inject
-  inflowInterval: number; // n_inj: steps between injections
-  inflowStripWidth: number;
-
-  // Spontaneous nucleation (optional)
-  nucleationEnabled: boolean;
-  nucleationRadius: number; // r_nuc
-  nucleationSteps: number; // tau_nuc
-
-  // Template Replication
-  captureRadius: number; // r_c
-  captureSteps: number; // tau_cap
-  releaseProb: number; // p_rel
-  coopWindow: number; // ΔT_coop
-
-  // Starvation and Decay
-  starvationSteps: number; // tau_starve
-  decayProb: number; // p_decay
-
+  energyFlowVelocity: number;        // How fast energy particles move rightward
+  energyInflowRate: number;          // Energy particles spawned per inflow event
+  
+  // Reactions
+  reactionRadius: number;            // How close particles need to be to react
+  reactionDiscoveryProbability: number; // Chance to discover a new reaction
+  reactionProbability: number;       // Chance of reaction when A+B+Energy are close
+  energyRequiredPerReaction: number; // Energy cost for each reaction
+  
   // Mutation
-  geomMutationStdDev: number; // σ_geom
-  releaseProbMutationStdDev: number; // σ_rel
-  siteCountMutationProb: number; // μ_k
-  newLinageThreshold: number;
-
-  // Initial seed
-  seedTemplates: number;
+  mutationProbability: number;       // Chance a new particle mutates to the other type
+  
+  // Decay
+  particleDecayRate: number;         // Spontaneous decay rate (prevents runaway growth)
 }
 
 /**
  * Data sent from the worker to the main thread for rendering.
- * positions is a transferable object for performance.
  */
 export interface SimulationState {
-  // Using Float32Array for continuous data and Uint32Array for discrete data.
-  // This data is structured for efficient rendering.
-  positions: Float32Array; // [x1, y1, x2, y2, ...]
-  types: Uint8Array; // [type1, type2, ...]
-  lineageIds: Uint32Array; // [lineageId1, lineageId2, ...]
-  diameters: Float32Array; // [d1, d2, ...]
-  stats: Record<string, number>;
+  positions: Float32Array;    // [x1, y1, x2, y2, ...]
+  types: Uint8Array;          // ParticleType for each particle
+  energies: Float32Array;     // Energy level for each particle (for visualization)
+  stats: {
+    frameCount: number;
+    particleCountA: number;
+    particleCountB: number;
+    particleCountC: number;
+    particleCountD: number;
+    particleCountE: number;
+    energyParticleCount: number;
+    totalReactions: number;
+    discoveredReactions: number;
+    reactionRateA: number;     // A + B → 2A reactions per second
+    reactionRateB: number;     // B + A → 2B reactions per second
+  };
 }
 
 /**
  * Defines the messages that can be sent *to* the simulation worker.
- * This is the command interface for controlling the simulation.
  */
 export type WorkerCommand =
   | { type: 'init'; params: SimulationParams }
@@ -96,7 +107,6 @@ export type WorkerCommand =
 
 /**
  * Defines the messages that can be sent *from* the simulation worker.
- * This is how the worker communicates its state back to the main thread.
  */
 export type WorkerEvent =
   | { type: 'initialized' }
