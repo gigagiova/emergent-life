@@ -164,6 +164,18 @@ function Controls() {
           />
           <span>{params.releaseProb.toFixed(3)}</span>
         </label>
+        <label>
+          Starvation Steps
+          <input
+            type='range'
+            min='500'
+            max='10000'
+            step='50'
+            value={params.starvationSteps}
+            onChange={(e) => setParams({ starvationSteps: parseInt(e.target.value) })}
+          />
+          <span>{params.starvationSteps}</span>
+        </label>
         {/* Add more parameter controls here */}
       </div>
     </div>

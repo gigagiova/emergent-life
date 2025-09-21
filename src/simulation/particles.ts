@@ -43,12 +43,8 @@ export abstract class Particle {
    * @returns true if particle should be removed (went out of bounds)
    */
   applyBoundaryConditions(params: SimulationParams): boolean {
-    // Periodic boundary in Y
-    if (this.y < 0) this.y += params.Ly
-    if (this.y > params.Ly) this.y -= params.Ly
-
-    // Open boundary in X - remove particles that exit
-    if (this.x > params.Lx || this.x < 0) {
+    // Open boundaries - remove particles that exit on any edge
+    if (this.x > params.Lx || this.x < 0 || this.y > params.Ly || this.y < 0) {
       this.active = false
       return true
     }
@@ -68,7 +64,7 @@ export abstract class Particle {
 }
 
 /**
- * A monomer particle - the basic building block.
+ * A monomer particle - the basic building block of the simulation.
  * Monomers drift rightward and can be captured by templates.
  */
 export class Monomer extends Particle {
@@ -79,10 +75,11 @@ export class Monomer extends Particle {
   update(params: SimulationParams): void {
     const diffusionStep = Math.sqrt(2 * params.diffusionCoefficient * params.timeStep)
     
-    // Brownian motion with rightward bias
+    // Brownian motion
     const brownianX = diffusionStep * (Math.random() - 0.5) * 2
     const brownianY = diffusionStep * (Math.random() - 0.5) * 2
     
+    // Set motion including a rightward bias to simulate flow
     this.x += brownianX + params.flowVelocity * params.timeStep
     this.y += brownianY
   }
@@ -146,7 +143,7 @@ export class Template extends Particle {
     this.x += diffusionStep * (Math.random() - 0.5) * 2
     this.y += diffusionStep * (Math.random() - 0.5) * 2
     
-    // Update angle slightly for more realistic behavior
+    // Rotate slightly for more realistic behavior
     this.angle += 0.1 * (Math.random() - 0.5)
   }
 
@@ -242,12 +239,18 @@ export class Template extends Particle {
    * @returns true if template should decay into monomers
    */
   updateStarvation(params: SimulationParams): boolean {
+
+    // Checks if any sites are captured
     const hasAnyCapture = this.capturedMonomers.some(m => m !== null)
     
     if (!hasAnyCapture) {
       this.starvationTimer++
       if (this.starvationTimer >= params.starvationSteps) {
+
+        // Checks if template should decay into monomers
         if (Math.random() < params.decayProb) {
+
+          // Template decays - create k monomers at its position
           this.active = false
           return true
         }

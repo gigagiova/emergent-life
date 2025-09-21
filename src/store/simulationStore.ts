@@ -50,7 +50,7 @@ const defaultParams: SimulationParams = {
   captureSteps: 10,
   releaseProb: 0.05,
   coopWindow: 10,
-  starvationSteps: 500,
+  starvationSteps: 2000,
   decayProb: 0.01,
   geomMutationStdDev: 0.25, // 0.05 * 5
   releaseProbMutationStdDev: 0.1,

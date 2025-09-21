@@ -97,9 +97,7 @@ export class Simulation {
         
         for (const id of cellParticles) {
           const other = this.particles.get(id)
-          if (other && other !== particle && other.active) {
-            nearby.push(other)
-          }
+          if (other && other !== particle && other.active) nearby.push(other)
         }
       }
     }
@@ -147,10 +145,13 @@ export class Simulation {
    * Handles template-monomer interactions for capture and replication.
    */
   private handleTemplateInteractions(): void {
+
+    // Get all active templates
     const templates = Array.from(this.particles.values()).filter(
       p => p instanceof Template && p.active
     ) as Template[]
 
+    // Get all active monomers
     const monomers = Array.from(this.particles.values()).filter(
       p => p instanceof Monomer && p.active
     ) as Monomer[]
@@ -166,23 +167,21 @@ export class Simulation {
 
       // Attempt capture at each site
       for (let siteIndex = 0; siteIndex < template.k; siteIndex++) {
+
+        // Skip if site is already bound to a monomer
         if (template.capturedMonomers[siteIndex] !== null) continue
 
+        // Attempts to capture a monomer, break if successful
         for (const monomer of nearbyMonomers) {
-          if (template.attemptCapture(siteIndex, monomer, this.params)) {
-            break // Move to next site
-          }
+          if (template.attemptCapture(siteIndex, monomer, this.params)) break
         }
       }
 
       // Check for replication
       const newTemplate = template.attemptRelease(this.params)
       if (newTemplate) {
-        const newId = this.availableIds.pop()
-        if (newId !== undefined) {
-          newTemplate.id = newId
-          this.particles.set(newId, newTemplate)
-        }
+        newTemplate.id = this.availableIds.pop()!
+        this.particles.set(newTemplate.id, newTemplate)
       }
 
       // Check for starvation/decay
@@ -214,22 +213,25 @@ export class Simulation {
       const nearby = this.getNearbyParticles(p1)
       
       for (const p2 of nearby) {
-        if (p1.collidesWith(p2, this.params)) {
-          // Simple collision resolution - push particles apart
-          const dx = p1.x - p2.x
-          const dy = p1.y - p2.y
-          const distance = Math.sqrt(dx * dx + dy * dy)
-          
-          if (distance > 0) {
-            const overlap = (p1.getDiameter(this.params) + p2.getDiameter(this.params)) / 2 - distance
-            const separationX = (dx / distance) * overlap * 0.5
-            const separationY = (dy / distance) * overlap * 0.5
-            
-            p1.x += separationX
-            p1.y += separationY
-            p2.x -= separationX
-            p2.y -= separationY
-          }
+
+        // Skip if particles do not collide
+        if (!p1.collidesWith(p2, this.params)) continue
+
+        // Simple collision resolution - push particles apart
+        const dx = p1.x - p2.x
+        const dy = p1.y - p2.y
+        const distance = Math.sqrt(dx * dx + dy * dy)
+        
+        if (distance > 0) {
+          const overlap = (p1.getDiameter(this.params) + p2.getDiameter(this.params)) / 2 - distance
+          const separationX = (dx / distance) * overlap * 0.5
+          const separationY = (dy / distance) * overlap * 0.5
+
+          // Push particles apart
+          p1.x += separationX
+          p1.y += separationY
+          p2.x -= separationX
+          p2.y -= separationY
         }
       }
     }
