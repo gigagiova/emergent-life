@@ -175,6 +175,18 @@ function Controls() {
       parser: parseInt,
       section: 'Physics'
     }
+    ,
+    // Reactions section
+    {
+      key: 'reactionDistanceInR',
+      label: 'Reaction Distance (r)',
+      min: 1,
+      max: 6,
+      step: 1,
+      formatter: (value) => value.toString() + ' r',
+      parser: parseInt,
+      section: 'Reactions'
+    }
   ];
 
   // Group controls by section

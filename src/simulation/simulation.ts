@@ -323,7 +323,7 @@ export class Simulation {
         const p2 = activeParticles[j];
 
         const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
-        const reactionRadius = this.params.particleRadius * 2;
+        const reactionRadius = this.params.particleRadius * this.params.reactionDistanceInR;
         if (dist < reactionRadius) {
           // Find a nearby energy particle to power the reaction
           for (const energy of activeEnergy) {

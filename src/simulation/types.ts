@@ -56,6 +56,7 @@ export interface SimulationParams {
   randomStepMagnitudeX: number; // Magnitude of random step per tick
   collisionEnergyLossPct: number; // Percentage energy loss in non-binder collisions
   binderForceUnitDistanceInR: number; // N radii distance where binder force equals X
+  reactionDistanceInR: number; // Distance in radii where reactions can occur
   
   // Lifespan
   particleLifespan: number; // In simulation steps

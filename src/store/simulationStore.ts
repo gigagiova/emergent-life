@@ -47,12 +47,13 @@ const defaultParams: SimulationParams = {
   
   // Simplified physics parameters
   particleRadius: 4,
-  randomStepMagnitudeX: 1.5,
+  randomStepMagnitudeX: 0.8,
   collisionEnergyLossPct: 20,
   binderForceUnitDistanceInR: 4,
+  reactionDistanceInR: 4,
   
   // Lifespan
-  particleLifespan: 600
+  particleLifespan: 1200
 }
 
 export const useSimulationStore = create<SimulationStore>((set, get) => ({
