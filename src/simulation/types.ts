@@ -85,7 +85,6 @@ export interface SimulationState {
     particleCountBinder: number;
     energyParticleCount: number;
     totalReactions: number;
-    discoveredReactions: number;
   };
 }
 

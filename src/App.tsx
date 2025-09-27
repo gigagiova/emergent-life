@@ -274,7 +274,6 @@ function Controls() {
         <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(255, 200, 50)' }}></span>Attractor Particles: {stats.particleCountAttractor || 0}</p>
         <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(255, 255, 100)' }}></span>Energy Particles: {stats.energyParticleCount || 0}</p>
         <p>Total Reactions: {stats.totalReactions || 0}</p>
-        <p>Discovered Reactions: {stats.discoveredReactions || 0}</p>
       </div>
 
       <div className='params-editor'>

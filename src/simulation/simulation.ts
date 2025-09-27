@@ -594,7 +594,6 @@ export class Simulation {
         particleCountBinder: counts[ParticleType.Binder] || 0,
         energyParticleCount: activeEnergy.length,
         totalReactions: this.totalReactions,
-        discoveredReactions: this.reactionCatalog.size,
       },
     };
   }
