@@ -416,7 +416,8 @@ export class Simulation {
       if (p.y < 0) p.y += this.Ly
       if (p.y > this.Ly) p.y -= this.Ly
       if (p.x < 0) p.x = 0
-      if (p.x > this.Lx) p.x = this.Lx
+      // Remove any substrate particle that hits the right boundary to mimic outflow
+      if (p.x > this.Lx) p.active = false
     }
   }
 
