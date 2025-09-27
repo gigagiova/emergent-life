@@ -191,11 +191,18 @@ export class Simulation {
     const stepX = new Map<ParticleId, number>()
     const stepY = new Map<ParticleId, number>()
 
-    // 1) Base random step X
+    // 1) Base random step X with rightward current bias for non-binders only
     for (const p of active) {
       const angle = Math.random() * Math.PI * 2
-      stepX.set(p.id, Math.cos(angle) * this.params.randomStepMagnitudeX)
-      stepY.set(p.id, Math.sin(angle) * this.params.randomStepMagnitudeX)
+      const baseX = Math.cos(angle) * this.params.randomStepMagnitudeX
+      const baseY = Math.sin(angle) * this.params.randomStepMagnitudeX
+      if (p.type !== ParticleType.Binder) {
+        stepX.set(p.id, baseX + this.params.current)
+        stepY.set(p.id, baseY)
+      } else {
+        stepX.set(p.id, baseX)
+        stepY.set(p.id, baseY)
+      }
     }
 
     // 2) Binder attraction inverse-square, normalized to X at N radii

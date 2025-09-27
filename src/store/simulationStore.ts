@@ -54,9 +54,10 @@ const defaultParams: SimulationParams = {
   binderQuorumRadiusInR: 6,
   binderQuorumSoftCap: 8,
   energyPulsePeriodFrames: 1000,
+  current: 0.2,
   
   // Lifespan
-  particleLifespan: 800
+  particleLifespan: 1100
 }
 
 export const useSimulationStore = create<SimulationStore>((set, get) => ({

@@ -60,6 +60,7 @@ export interface SimulationParams {
   binderQuorumRadiusInR: number; // Radius in r for local binder-density estimation
   binderQuorumSoftCap: number; // Soft cap for binders within quorum radius
   energyPulsePeriodFrames: number; // Period of energy inflow pulses (frames)
+  current: number; // Rightward bias applied to substrate step per tick (pixels)
   
   // Lifespan
   particleLifespan: number; // In simulation steps

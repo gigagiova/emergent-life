@@ -136,6 +136,16 @@ function Controls() {
       section: 'Physics'
     },
     {
+      key: 'current',
+      label: 'Current (right bias)',
+      min: 0,
+      max: 3,
+      step: 0.05,
+      formatter: (value) => value.toFixed(2),
+      parser: parseFloat,
+      section: 'Physics'
+    },
+    {
       key: 'energyPulsePeriodFrames',
       label: 'Energy Pulse Period',
       min: 120,
