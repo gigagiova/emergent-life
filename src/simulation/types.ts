@@ -57,6 +57,8 @@ export interface SimulationParams {
   collisionEnergyLossPct: number; // Percentage energy loss in non-binder collisions
   binderForceUnitDistanceInR: number; // N radii distance where binder force equals X
   reactionDistanceInR: number; // Distance in radii where reactions can occur
+  binderQuorumRadiusInR: number; // Radius in r for local binder-density estimation
+  binderQuorumSoftCap: number; // Soft cap for binders within quorum radius
   
   // Lifespan
   particleLifespan: number; // In simulation steps

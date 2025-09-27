@@ -51,6 +51,8 @@ const defaultParams: SimulationParams = {
   collisionEnergyLossPct: 20,
   binderForceUnitDistanceInR: 4,
   reactionDistanceInR: 3,
+  binderQuorumRadiusInR: 6,
+  binderQuorumSoftCap: 8,
   
   // Lifespan
   particleLifespan: 800

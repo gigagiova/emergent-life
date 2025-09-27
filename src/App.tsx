@@ -166,6 +166,26 @@ function Controls() {
       section: 'Physics'
     },
     {
+      key: 'binderQuorumRadiusInR',
+      label: 'Quorum Radius (r)',
+      min: 2,
+      max: 16,
+      step: 1,
+      formatter: (value) => value.toString() + ' r',
+      parser: parseInt,
+      section: 'Physics'
+    },
+    {
+      key: 'binderQuorumSoftCap',
+      label: 'Quorum Soft Cap',
+      min: 1,
+      max: 24,
+      step: 1,
+      formatter: (value) => value.toString(),
+      parser: parseInt,
+      section: 'Physics'
+    },
+    {
       key: 'particleLifespan',
       label: 'Particle Lifespan',
       min: 100,

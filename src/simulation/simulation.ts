@@ -154,9 +154,10 @@ export class Simulation {
 
     const r = this.params.particleRadius
     const binderRange = this.params.binderForceUnitDistanceInR * r
+    const quorumRange = this.params.binderQuorumRadiusInR * r
 
     // Spatial hash grid for neighbor queries
-    const cellSize = Math.max(2 * r, binderRange)
+    const cellSize = Math.max(2 * r, binderRange, quorumRange)
     const grid = new Map<string, SubstrateParticle[]>()
     const cellKey = (x: number, y: number) => `${Math.floor(x / cellSize)}:${Math.floor(y / cellSize)}`
 
@@ -199,7 +200,22 @@ export class Simulation {
 
     // 2) Binder attraction inverse-square, normalized to X at N radii
     for (const p of active) {
-      const neighbors = getNeighbors(p.x, p.y, binderRange)
+      const neighbors = getNeighbors(p.x, p.y, Math.max(binderRange, quorumRange))
+      // Count local binders within quorum range for density attenuation
+      let localBinderCount = 0
+      if (p.type !== ParticleType.Binder) {
+        for (const q of neighbors) {
+          if (q.type === ParticleType.Binder) {
+            const dxq = q.x - p.x
+            const dyq = q.y - p.y
+            const dq = Math.hypot(dxq, dyq)
+            if (dq <= quorumRange) localBinderCount++
+          }
+        }
+      }
+      // Compute attenuation factor: 1 / (1 + n / softCap)
+      const quorumCap = Math.max(1, this.params.binderQuorumSoftCap)
+      const attenuation = 1 / (1 + localBinderCount / quorumCap)
       for (const q of neighbors) {
         if (p.id === q.id) continue
         if (q.type !== ParticleType.Binder) continue
@@ -210,7 +226,7 @@ export class Simulation {
         const dClamped = Math.max(dist, 2 * r)
         const unitX = dx / dist
         const unitY = dy / dist
-        const mag = this.params.randomStepMagnitudeX * Math.pow(binderRange / dClamped, 2)
+        const mag = attenuation * this.params.randomStepMagnitudeX * Math.pow(binderRange / dClamped, 2)
         stepX.set(p.id, (stepX.get(p.id) || 0) + unitX * mag)
         stepY.set(p.id, (stepY.get(p.id) || 0) + unitY * mag)
       }
