@@ -136,6 +136,16 @@ function Controls() {
       section: 'Physics'
     },
     {
+      key: 'energyPulsePeriodFrames',
+      label: 'Energy Pulse Period',
+      min: 120,
+      max: 6000,
+      step: 60,
+      formatter: (value) => value.toString() + ' frames',
+      parser: parseInt,
+      section: 'Reactions'
+    },
+    {
       key: 'randomStepMagnitudeX',
       label: 'Random Step X',
       min: 0.1,

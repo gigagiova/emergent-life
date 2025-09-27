@@ -53,6 +53,7 @@ const defaultParams: SimulationParams = {
   reactionDistanceInR: 3,
   binderQuorumRadiusInR: 6,
   binderQuorumSoftCap: 8,
+  energyPulsePeriodFrames: 1000,
   
   // Lifespan
   particleLifespan: 800

@@ -355,6 +355,14 @@ export class Simulation {
    * Spawns a constant number of new energy particles from the left edge on each step.
    */
   private handleEnergyInflow(): void {
+    // Energy pulses: toggle inflow on/off based on frame within the pulse period
+    const period = Math.max(1, this.params.energyPulsePeriodFrames)
+    const half = Math.floor(period / 2)
+    const phase = this.frameCount % period
+    const inflowActive = phase < half
+
+    if (!inflowActive) return
+
     for (let i = 0; i < this.energyInflowPerTick; i++) {
       const x = Math.random() * 20; // Spawn in a narrow strip on the far left
       const y = Math.random() * this.Ly;
