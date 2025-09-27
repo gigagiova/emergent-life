@@ -50,10 +50,10 @@ const defaultParams: SimulationParams = {
   randomStepMagnitudeX: 0.8,
   collisionEnergyLossPct: 20,
   binderForceUnitDistanceInR: 4,
-  reactionDistanceInR: 4,
+  reactionDistanceInR: 3,
   
   // Lifespan
-  particleLifespan: 1200
+  particleLifespan: 800
 }
 
 export const useSimulationStore = create<SimulationStore>((set, get) => ({

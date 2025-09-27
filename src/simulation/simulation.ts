@@ -116,7 +116,8 @@ export class Simulation {
       // Spawn only in the middle 60% of the canvas
       const x = this.Lx * (0.2 + Math.random() * 0.6);
       const y = this.Ly * (0.2 + Math.random() * 0.6);
-      this.particles.set(this.nextId, new SubstrateParticle(this.nextId, x, y, type, this.params.particleLifespan));
+      // Create with birthFrame so age is derived from global frame counter
+      this.particles.set(this.nextId, new SubstrateParticle(this.nextId, x, y, type, this.frameCount))
       this.nextId++;
     }
   }
@@ -133,9 +134,9 @@ export class Simulation {
    * Updates lifespans and applies simplified physics per tick
    */
   private updateAndMoveParticles(): void {
-    // Update substrate lifespans
+    // Update substrate lifespans by passing current frame and global lifespan
     for (const p of this.particles.values()) {
-      if (p.active) p.update()
+      if (p.active) p.update(this.frameCount, this.params.particleLifespan)
     }
 
     // Update energy particles simple flow
@@ -425,7 +426,8 @@ export class Simulation {
       const newX = catalyst.x + Math.cos(angle) * distance;
       const newY = catalyst.y + Math.sin(angle) * distance;
       
-      const newParticle = new SubstrateParticle(this.nextId, newX, newY, productType, this.params.particleLifespan);
+      // Create new product with current frame as birthFrame so lifespan is global
+      const newParticle = new SubstrateParticle(this.nextId, newX, newY, productType, this.frameCount)
       this.particles.set(this.nextId, newParticle);
       this.nextId++;
       return newParticle;

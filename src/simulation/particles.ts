@@ -1,4 +1,4 @@
-import type { ParticleId, SimulationParams } from './types';
+import type { ParticleId } from './types';
 import { ParticleType } from './types';
 
 /**
@@ -16,16 +16,7 @@ abstract class Particle {
     this.y = y;
   }
 
-  /**
-   * Update particle position with Brownian motion
-   */
-  protected brownianStep(params: SimulationParams): void {
-    const diffusionStep = Math.sqrt(2 * params.diffusionCoefficient * params.timeStep);
-    this.x += diffusionStep * (Math.random() - 0.5) * 2;
-    this.y += diffusionStep * (Math.random() - 0.5) * 2;
-  }
-
-  abstract update(params: SimulationParams, Lx: number, Ly: number): void;
+  // Base particle has no intrinsic per-tick behavior in this model
 }
 
 /**
@@ -35,21 +26,19 @@ abstract class Particle {
 export class SubstrateParticle extends Particle {
   public energy: number = 0; // Internal energy for visualization
   public type: ParticleType;
-  public lifespan: number; // Ticks down each step
+  public birthFrame: number; // Frame at which the particle was created
 
-  constructor(id: ParticleId, x: number, y: number, type: ParticleType, initialLifespan: number) {
+  constructor(id: ParticleId, x: number, y: number, type: ParticleType, birthFrame: number) {
     super(id, x, y);
     this.type = type;
-    this.lifespan = initialLifespan;
+    this.birthFrame = birthFrame;
   }
 
-  update(): void {
-    // Lifespan decay is the primary internal update.
-    // Movement (diffusion, forces) is handled by the main simulation loop.
-    this.lifespan--;
-    if (this.lifespan <= 0) {
-      this.active = false; // Particle "dissolves"
-    }
+  update(currentFrame: number, globalLifespan: number): void {
+    // Age-based deactivation: compare current frame to birthFrame
+    // Movement is handled by the main simulation loop
+    const age = currentFrame - this.birthFrame;
+    if (age >= globalLifespan) this.active = false;
   }
 }
 
@@ -57,21 +46,5 @@ export class SubstrateParticle extends Particle {
  * Energy particle - flows from left to right, powers reactions
  */
 export class EnergyParticle extends Particle {
-  update(params: SimulationParams, Lx: number, Ly: number): void {
-    // Strong rightward flow with added vertical turbulence
-    const horizontalMovement = params.energyFlowVelocity * params.timeStep;
-    const verticalMovement = (Math.random() - 0.5) * params.energyTurbulence * horizontalMovement;
-
-    this.x += horizontalMovement;
-    this.y += verticalMovement;
-    
-    // Apply periodic boundary conditions in Y
-    if (this.y < 0) this.y += Ly;
-    if (this.y > Ly) this.y -= Ly;
-    
-    // Remove energy particles that exit the right boundary
-    if (this.x > Lx) {
-      this.active = false;
-    }
-  }
+  // Movement is handled by the main simulation loop
 }
