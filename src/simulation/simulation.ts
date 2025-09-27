@@ -406,8 +406,6 @@ export class Simulation {
         energyParticleCount: activeEnergy.length,
         totalReactions: this.totalReactions,
         discoveredReactions: this.reactionCatalog.size,
-        reactionRateA: 0, // These specific rates are no longer tracked
-        reactionRateB: 0,
       },
     };
   }

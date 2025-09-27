@@ -104,8 +104,138 @@ function SimulationCanvas() {
 /**
  * Provides UI controls for the simulation.
  */
+/**
+ * Control configuration for the simulation parameters
+ */
+interface ControlConfig {
+  key: string;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  formatter: (value: number) => string;
+  parser: (value: string) => number;
+  section: string;
+}
+
 function Controls() {
   const { start, stop, reset, isRunning, params, setParams, stats } = useSimulationStore();
+
+  // Define all control configurations in a single array
+  const controlConfigs: ControlConfig[] = [
+    // Dynamics section
+    {
+      key: 'diffusionCoefficient',
+      label: 'Diffusion Coefficient',
+      min: 0.5,
+      max: 10,
+      step: 0.1,
+      formatter: (value) => value.toFixed(1),
+      parser: parseFloat,
+      section: 'Dynamics'
+    },
+    {
+      key: 'energyFlowVelocity',
+      label: 'Energy Flow Velocity',
+      min: 5,
+      max: 100,
+      step: 1,
+      formatter: (value) => value.toFixed(0),
+      parser: parseFloat,
+      section: 'Dynamics'
+    },
+    {
+      key: 'energyInflowRate',
+      label: 'Energy Inflow Rate',
+      min: 1,
+      max: 10,
+      step: 1,
+      formatter: (value) => value.toString(),
+      parser: parseInt,
+      section: 'Dynamics'
+    },
+    // Physics & Lifespan section
+    {
+      key: 'primordialWindStrength',
+      label: 'Primordial Wind',
+      min: 0,
+      max: 0.1,
+      step: 0.001,
+      formatter: (value) => value.toFixed(3),
+      parser: parseFloat,
+      section: 'Physics & Lifespan'
+    },
+    {
+      key: 'windShelterRadius',
+      label: 'Wind Shelter Radius',
+      min: 10,
+      max: 100,
+      step: 1,
+      formatter: (value) => value.toString(),
+      parser: parseInt,
+      section: 'Physics & Lifespan'
+    },
+    {
+      key: 'binderAttractionForce',
+      label: 'Binder Attraction',
+      min: 0,
+      max: 1,
+      step: 0.01,
+      formatter: (value) => value.toFixed(2),
+      parser: parseFloat,
+      section: 'Physics & Lifespan'
+    },
+    {
+      key: 'substrateRepulsionForce',
+      label: 'Substrate Repulsion',
+      min: 0,
+      max: 1,
+      step: 0.01,
+      formatter: (value) => value.toFixed(2),
+      parser: parseFloat,
+      section: 'Physics & Lifespan'
+    },
+    {
+      key: 'particleLifespan',
+      label: 'Particle Lifespan',
+      min: 100,
+      max: 2000,
+      step: 50,
+      formatter: (value) => value.toString(),
+      parser: parseInt,
+      section: 'Physics & Lifespan'
+    },
+    // Reactions section
+    {
+      key: 'reactionRadius',
+      label: 'Reaction Radius',
+      min: 5,
+      max: 30,
+      step: 1,
+      formatter: (value) => value.toFixed(0),
+      parser: parseFloat,
+      section: 'Reactions'
+    },
+    {
+      key: 'reactionDiscoveryProbability',
+      label: 'Discovery Probability',
+      min: 0,
+      max: 0.01,
+      step: 0.0001,
+      formatter: (value) => value.toFixed(4),
+      parser: parseFloat,
+      section: 'Reactions'
+    }
+  ];
+
+  // Group controls by section
+  const controlsBySection = controlConfigs.reduce((acc, config) => {
+    if (!acc[config.section]) {
+      acc[config.section] = [];
+    }
+    acc[config.section].push(config);
+    return acc;
+  }, {} as Record<string, ControlConfig[]>);
 
   return (
     <div>
@@ -129,114 +259,25 @@ function Controls() {
       </div>
 
       <div className='params-editor'>
-        <h4>Dynamics</h4>
-        <label>
-          Diffusion Coefficient
-          <input
-            type='range' min='0.5' max='10' step='0.1'
-            value={params.diffusionCoefficient}
-            onChange={(e) => setParams({ diffusionCoefficient: parseFloat(e.target.value) })}
-          />
-          <span>{params.diffusionCoefficient.toFixed(1)}</span>
-        </label>
-        
-        <label>
-          Energy Flow Velocity
-          <input
-            type='range' min='5' max='100' step='1'
-            value={params.energyFlowVelocity}
-            onChange={(e) => setParams({ energyFlowVelocity: parseFloat(e.target.value) })}
-          />
-          <span>{params.energyFlowVelocity.toFixed(0)}</span>
-        </label>
-        
-        <label>
-          Energy Inflow Rate
-          <input
-            type='range' min='1' max='10' step='1'
-            value={params.energyInflowRate}
-            onChange={(e) => setParams({ energyInflowRate: parseInt(e.target.value) })}
-          />
-          <span>{params.energyInflowRate}</span>
-        </label>
-
-        <h4>Physics & Lifespan</h4>
-        <label>
-          Primordial Wind
-          <input
-            type='range' min='0' max='0.1' step='0.001'
-            value={params.primordialWindStrength}
-            onChange={(e) => setParams({ primordialWindStrength: parseFloat(e.target.value) })}
-          />
-          <span>{params.primordialWindStrength.toFixed(3)}</span>
-        </label>
-        <label>
-          Wind Shelter Radius
-          <input
-            type='range' min='10' max='100' step='1'
-            value={params.windShelterRadius}
-            onChange={(e) => setParams({ windShelterRadius: parseInt(e.target.value) })}
-          />
-          <span>{params.windShelterRadius}</span>
-        </label>
-        <label>
-          Binder Attraction
-          <input
-            type='range' min='0' max='1' step='0.01'
-            value={params.binderAttractionForce}
-            onChange={(e) => setParams({ binderAttractionForce: parseFloat(e.target.value) })}
-          />
-          <span>{params.binderAttractionForce.toFixed(2)}</span>
-        </label>
-        <label>
-          Substrate Repulsion
-          <input
-            type='range' min='0' max='1' step='0.01'
-            value={params.substrateRepulsionForce}
-            onChange={(e) => setParams({ substrateRepulsionForce: parseFloat(e.target.value) })}
-          />
-          <span>{params.substrateRepulsionForce.toFixed(2)}</span>
-        </label>
-        <label>
-          Particle Lifespan
-          <input
-            type='range' min='100' max='2000' step='50'
-            value={params.particleLifespan}
-            onChange={(e) => setParams({ particleLifespan: parseInt(e.target.value) })}
-          />
-          <span>{params.particleLifespan}</span>
-        </label>
-
-        <h4>Reactions</h4>
-        <label>
-          Reaction Radius
-          <input
-            type='range' min='5' max='30' step='1'
-            value={params.reactionRadius}
-            onChange={(e) => setParams({ reactionRadius: parseFloat(e.target.value) })}
-          />
-          <span>{params.reactionRadius.toFixed(0)}</span>
-        </label>
-        
-        <label>
-          Discovery Probability
-          <input
-            type='range' min='0' max='0.01' step='0.0001'
-            value={params.reactionDiscoveryProbability}
-            onChange={(e) => setParams({ reactionDiscoveryProbability: parseFloat(e.target.value) })}
-          />
-          <span>{params.reactionDiscoveryProbability.toFixed(4)}</span>
-        </label>
-        
-        <label>
-          Particle Decay Rate
-          <input
-            type='range' min='0' max='0.01' step='0.0001'
-            value={params.particleDecayRate}
-            onChange={(e) => setParams({ particleDecayRate: parseFloat(e.target.value) })}
-          />
-          <span>{(params.particleDecayRate * 100).toFixed(2)}%</span>
-        </label>
+        {Object.entries(controlsBySection).map(([sectionName, controls]) => (
+          <div key={sectionName}>
+            <h4>{sectionName}</h4>
+            {controls.map((config) => (
+              <label key={config.key}>
+                {config.label}
+                <input
+                  type='range'
+                  min={config.min}
+                  max={config.max}
+                  step={config.step}
+                  value={params[config.key as keyof typeof params]}
+                  onChange={(e) => setParams({ [config.key]: config.parser(e.target.value) } as Partial<typeof params>)}
+                />
+                <span>{config.formatter(params[config.key as keyof typeof params])}</span>
+              </label>
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   );

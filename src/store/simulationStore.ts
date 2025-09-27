@@ -60,19 +60,11 @@ const defaultParams: SimulationParams = {
   windShelterRadius: 30, // 2x reaction radius
   binderAttractionForce: 40, // Drastically increased to overcome diffusion
   substrateRepulsionForce: 50, // Drastically increased to ensure spreading
-  particleLifespan: 300, // Shorter lifespan increases pressure
+  particleLifespan: 600, // Shorter lifespan increases pressure
   
   // Reactions
   reactionRadius: 15,            // How close particles need to be to react
   reactionDiscoveryProbability: 0.001, // Very low chance to discover a new reaction pathway
-  reactionProbability: 0.1,      // Chance of reaction when A+B+Energy are close
-  energyRequiredPerReaction: 1,  // Energy cost for each reaction
-  
-  // Mutation
-  mutationProbability: 0.02,     // Chance a new particle mutates to the other type
-  
-  // Decay (No longer used, replaced by lifespan)
-  particleDecayRate: 0.0,
 };
 
 export const useSimulationStore = create<SimulationStore>((set, get) => ({

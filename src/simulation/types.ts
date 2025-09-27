@@ -71,14 +71,6 @@ export interface SimulationParams {
   // Reactions
   reactionRadius: number;            // How close particles need to be to react
   reactionDiscoveryProbability: number; // Chance to discover a new reaction
-  reactionProbability: number;       // Chance of reaction when A+B+Energy are close
-  energyRequiredPerReaction: number; // Energy cost for each reaction
-  
-  // Mutation
-  mutationProbability: number;       // Chance a new particle mutates to the other type
-  
-  // Decay
-  particleDecayRate: number;         // Spontaneous decay rate (prevents runaway growth)
 }
 
 /**
@@ -98,8 +90,6 @@ export interface SimulationState {
     energyParticleCount: number;
     totalReactions: number;
     discoveredReactions: number;
-    reactionRateA: number;     // A + B → 2A reactions per second
-    reactionRateB: number;     // B + A → 2B reactions per second
   };
 }
 
