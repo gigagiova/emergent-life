@@ -1,11 +1,11 @@
 /**
- * This file defines the core data structures and types for the autocatalytic simulation.
- * 
- * System: Minimal Autocatalytic Sets
- * - Type A particles (blue) 
- * - Type B particles (red)
- * - Energy carriers (yellow, flow left to right)
- * - Reactions: A + B + Energy → 2A, B + A + Energy → 2B
+ * Core data structures and types for the autocatalytic simulation
+ *
+ * Simplified physics model goals:
+ * - Particles receive a random step of magnitude X each tick
+ * - Binders attract other particles with inverse-square strength
+ * - Collisions are elastic with optional damping, binders dissipate incoming energy
+ * - Chemical reactions remain intact and operate on proximity and energy
  */
 
 export type ParticleId = number;
@@ -51,26 +51,14 @@ export interface SimulationParams {
   particleCountBinder: number;
   energyParticleCount: number;
   
-  // Particle properties
-  particleDiameter: number;
+  // Simplified physics parameters
+  particleRadius: number; // Radius in pixels, used for physics and rendering
+  randomStepMagnitudeX: number; // Magnitude of random step per tick
+  collisionEnergyLossPct: number; // Percentage energy loss in non-binder collisions
+  binderForceUnitDistanceInR: number; // N radii distance where binder force equals X
   
-  // Dynamics
-  timeStep: number;
-  diffusionCoefficient: number;
-  energyFlowVelocity: number;        // How fast energy particles move rightward
-  energyInflowRate: number;          // Energy particles spawned per inflow event
-  energyTurbulence: number; // How much energy particles swerve vertically
-  
-  // Physics & Lifespan
-  primordialWindStrength: number; // Outward push from the center
-  windShelterRadius: number; // Radius for checking binder density to reduce wind
-  binderAttractionForce: number;
-  substrateRepulsionForce: number;
+  // Lifespan
   particleLifespan: number; // In simulation steps
-  
-  // Reactions
-  reactionRadius: number;            // How close particles need to be to react
-  reactionDiscoveryProbability: number; // Chance to discover a new reaction
 }
 
 /**

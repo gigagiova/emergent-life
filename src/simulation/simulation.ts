@@ -1,14 +1,7 @@
-import { createNoise3D } from 'simplex-noise';
 import type { SimulationParams, SimulationState, ParticleId, Reaction } from './types';
 import { ParticleType } from './types';
 import { SubstrateParticle, EnergyParticle } from './particles';
 
-declare module './particles' {
-    interface SubstrateParticle {
-        tempForceX?: number;
-        tempForceY?: number;
-    }
-}
 
 /**
  * Autocatalytic reaction simulation
@@ -26,8 +19,11 @@ export class Simulation {
   private Lx: number = 800;
   private Ly: number = 600;
 
-  // Noise function for generating the dynamic wind field
-  private noise3D: ReturnType<typeof createNoise3D>;
+  // Simplified physics constants not exposed
+  private readonly reactionDiscoveryProbability = 0.001;
+  private readonly energyInflowPerTick = 2;
+  private readonly energyFlowVelocity = 60;
+  private readonly energyTurbulence = 0.4;
 
   // A single map to hold all substrate particles, distinguished by their internal 'type'
   private particles = new Map<ParticleId, SubstrateParticle>();
@@ -45,7 +41,6 @@ export class Simulation {
     this.params = params;
     this.Lx = params.Lx;
     this.Ly = params.Ly;
-    this.noise3D = createNoise3D();
   }
 
   /**
@@ -88,7 +83,6 @@ export class Simulation {
 
   public step(): void {
     this.frameCount++;
-
     this.updateAndMoveParticles();
     this.handleEnergyInflow();
     this.processReactionsAndDiscovery();
@@ -96,120 +90,215 @@ export class Simulation {
   }
   
   /**
-   * Updates particle lifespans and applies all physics (diffusion, forces).
+   * Updates lifespans and applies simplified physics per tick
    */
   private updateAndMoveParticles(): void {
-    // First, update internal state (like lifespan) for all substrate particles
+    // Update substrate lifespans
     for (const p of this.particles.values()) {
-      if (p.active) p.update();
-    }
-    // THEN, update the energy particles, which have their own simple movement logic.
-    for (const p of this.energyParticles.values()) {
-      if (p.active) p.update(this.params, this.Lx, this.Ly);
-    }
-    
-    const activeParticles = Array.from(this.particles.values()).filter(p => p.active);
-    
-    // Initialize temporary forces for this physics step.
-    for (const p of activeParticles) {
-        p.tempForceX = 0;
-        p.tempForceY = 0;
+      if (p.active) p.update()
     }
 
-    // Apply forces and diffusion in a second pass
-    for (let i = 0; i < activeParticles.length; i++) {
-        const p1 = activeParticles[i];
+    // Update energy particles simple flow
+    for (const e of this.energyParticles.values()) {
+      if (!e.active) continue
+      e.x += this.energyFlowVelocity * 1.0 / 60.0
+      e.y += (Math.random() - 0.5) * this.energyTurbulence
+      if (e.y < 0) e.y += this.Ly
+      if (e.y > this.Ly) e.y -= this.Ly
+      if (e.x > this.Lx) e.active = false
+    }
 
-        // --- Start of Physics Calculations ---
-        let totalForceX = 0;
-        let totalForceY = 0;
+    const active = Array.from(this.particles.values()).filter(p => p.active)
+    if (active.length === 0) return
 
-        // 1. Brownian motion (random jiggle)
-        const diffusionStep = Math.sqrt(2 * this.params.diffusionCoefficient * this.params.timeStep);
-        totalForceX += diffusionStep * (Math.random() - 0.5) * 2;
-        totalForceY += diffusionStep * (Math.random() - 0.5) * 2;
+    const r = this.params.particleRadius
+    const binderRange = this.params.binderForceUnitDistanceInR * r
 
-        // 2. Dynamic, Swirling Wind (based on Perlin/Simplex noise)
-        const noiseScale = 0.005; // How "zoomed in" the wind pattern is
-        const timeScale = 0.001; // How fast the wind pattern changes
-        const windAngle = this.noise3D(p1.x * noiseScale, p1.y * noiseScale, this.frameCount * timeScale) * Math.PI * 2;
-        
-        // Calculate local binder density for sheltering effect
-        let binderCount = 0;
-        for (const p2 of activeParticles) {
-            if (p1.id !== p2.id && p2.type === ParticleType.Binder) {
-                if (Math.hypot(p1.x - p2.x, p1.y - p2.y) < this.params.windShelterRadius) {
-                    binderCount++;
-                }
-            }
+    // Spatial hash grid for neighbor queries
+    const cellSize = Math.max(2 * r, binderRange)
+    const grid = new Map<string, SubstrateParticle[]>()
+    const cellKey = (x: number, y: number) => `${Math.floor(x / cellSize)}:${Math.floor(y / cellSize)}`
+
+    for (const p of active) {
+      const key = cellKey(p.x, p.y)
+      const arr = grid.get(key)
+      if (arr) arr.push(p)
+      else grid.set(key, [p])
+    }
+
+    const getNeighbors = (x: number, y: number, radius: number): SubstrateParticle[] => {
+      const cx = Math.floor(x / cellSize)
+      const cy = Math.floor(y / cellSize)
+      const res: SubstrateParticle[] = []
+      const span = 1
+      for (let ix = cx - span; ix <= cx + span; ix++) {
+        for (let iy = cy - span; iy <= cy + span; iy++) {
+          const arr = grid.get(`${ix}:${iy}`)
+          if (!arr) continue
+          for (const p of arr) {
+            const dx = p.x - x
+            const dy = p.y - y
+            if (Math.hypot(dx, dy) <= radius + 1e-6) res.push(p)
+          }
         }
-        
-        // Wind force is inversely proportional to local binder density.
-        // A dense membrane provides significant shelter.
-        const shelterFactor = 1 / (1 + binderCount);
-        const windForce = this.params.primordialWindStrength * shelterFactor;
-        
-        totalForceX += Math.cos(windAngle) * windForce;
-        totalForceY += Math.sin(windAngle) * windForce;
-
-
-        // 3. Inter-particle forces (attraction/repulsion)
-        for (let j = i + 1; j < activeParticles.length; j++) {
-            const p2 = activeParticles[j];
-            
-            const dx = p2.x - p1.x;
-            const dy = p2.y - p1.y;
-            const dist = Math.hypot(dx, dy);
-
-            if (dist > 0 && dist < this.params.reactionRadius * 2) {
-                const force = this.calculateForce(p1, p2, dist);
-                const forceComponent = force * this.params.timeStep;
-                
-                // We'll apply this force component to p1 now, and subtract it from p2 later
-                // to avoid calculating the force twice.
-                totalForceX += (dx / dist) * forceComponent;
-                totalForceY += (dy / dist) * forceComponent;
-                
-                // Store the force to apply to p2 (Newton's 3rd law)
-                p2.tempForceX = (p2.tempForceX || 0) - (dx / dist) * forceComponent;
-                p2.tempForceY = (p2.tempForceY || 0) - (dy / dist) * forceComponent;
-            }
-        }
-        
-        // Add forces accumulated from previous particles
-        totalForceX += p1.tempForceX || 0;
-        totalForceY += p1.tempForceY || 0;
-
-        // --- Apply all calculated forces to move the particle ---
-        p1.x += totalForceX;
-        p1.y += totalForceY;
-        
-        // Apply periodic boundary conditions for Y axis
-        if (p1.y < 0) p1.y += this.Ly;
-        if (p1.y > this.Ly) p1.y -= this.Ly;
-    }
-  }
-
-  /**
-   * Calculates the force between two particles based on the new rules.
-   */
-  private calculateForce(p1: SubstrateParticle, p2: SubstrateParticle, dist: number): number {
-      // Rule 1: If either particle is a Binder, they attract all other substrates.
-      if (p1.type === ParticleType.Binder || p2.type === ParticleType.Binder) {
-          return this.params.binderAttractionForce;
       }
-      
-      // Rule 2: Otherwise, all other substrate particles repel each other.
-      // The force is stronger at closer distances (inverse relationship).
-      return -this.params.substrateRepulsionForce / (dist + 1e-6);
+      return res
+    }
+
+    // Step vectors per particle id
+    const stepX = new Map<ParticleId, number>()
+    const stepY = new Map<ParticleId, number>()
+
+    // 1) Base random step X
+    for (const p of active) {
+      const angle = Math.random() * Math.PI * 2
+      stepX.set(p.id, Math.cos(angle) * this.params.randomStepMagnitudeX)
+      stepY.set(p.id, Math.sin(angle) * this.params.randomStepMagnitudeX)
+    }
+
+    // 2) Binder attraction inverse-square, normalized to X at N radii
+    for (const p of active) {
+      const neighbors = getNeighbors(p.x, p.y, binderRange)
+      for (const q of neighbors) {
+        if (p.id === q.id) continue
+        if (q.type !== ParticleType.Binder) continue
+        const dx = q.x - p.x
+        const dy = q.y - p.y
+        const dist = Math.hypot(dx, dy)
+        if (dist < 1e-6) continue
+        const dClamped = Math.max(dist, 2 * r)
+        const unitX = dx / dist
+        const unitY = dy / dist
+        const mag = this.params.randomStepMagnitudeX * Math.pow(binderRange / dClamped, 2)
+        stepX.set(p.id, (stepX.get(p.id) || 0) + unitX * mag)
+        stepY.set(p.id, (stepY.get(p.id) || 0) + unitY * mag)
+      }
+    }
+
+    // 3) Apply steps tentatively
+    for (const p of active) {
+      p.x += stepX.get(p.id) || 0
+      p.y += stepY.get(p.id) || 0
+    }
+
+    // 4) Resolve collisions using nearest neighbors
+    grid.clear()
+    for (const p of active) {
+      const key = cellKey(p.x, p.y)
+      const arr = grid.get(key)
+      if (arr) arr.push(p)
+      else grid.set(key, [p])
+    }
+
+    const neighborsForCollision = (p: SubstrateParticle): SubstrateParticle[] => {
+      const cx = Math.floor(p.x / cellSize)
+      const cy = Math.floor(p.y / cellSize)
+      const res: SubstrateParticle[] = []
+      for (let ix = cx - 1; ix <= cx + 1; ix++) {
+        for (let iy = cy - 1; iy <= cy + 1; iy++) {
+          const arr = grid.get(`${ix}:${iy}`)
+          if (!arr) continue
+          for (const q of arr) res.push(q)
+        }
+      }
+      return res
+    }
+
+    const lossFactor = Math.sqrt(Math.max(0, 1 - this.params.collisionEnergyLossPct / 100))
+
+    for (const p of active) {
+      const neigh = neighborsForCollision(p)
+      for (const q of neigh) {
+        if (q.id <= p.id) continue
+        const dx = q.x - p.x
+        const dy = q.y - p.y
+        const dist = Math.hypot(dx, dy)
+        if (dist >= 2 * r || dist <= 1e-6) continue
+
+        const nx = dx / dist
+        const ny = dy / dist
+        const overlap = 2 * r - dist
+
+        // Binder collision rule
+        if (p.type === ParticleType.Binder || q.type === ParticleType.Binder) {
+          if (p.type === ParticleType.Binder && q.type !== ParticleType.Binder) {
+            // Place q tangent to p, dissipate q step
+            q.x = p.x + nx * 2 * r
+            q.y = p.y + ny * 2 * r
+            stepX.set(q.id, 0)
+            stepY.set(q.id, 0)
+          } else if (q.type === ParticleType.Binder && p.type !== ParticleType.Binder) {
+            p.x = q.x - nx * 2 * r
+            p.y = q.y - ny * 2 * r
+            stepX.set(p.id, 0)
+            stepY.set(p.id, 0)
+          } else {
+            // binder-binder: separate equally and zero both steps
+            p.x -= nx * overlap * 0.5
+            p.y -= ny * overlap * 0.5
+            q.x += nx * overlap * 0.5
+            q.y += ny * overlap * 0.5
+            stepX.set(p.id, 0)
+            stepY.set(p.id, 0)
+            stepX.set(q.id, 0)
+            stepY.set(q.id, 0)
+          }
+          continue
+        }
+
+        // Elastic collision with damping for two non-binders
+        const v1x = stepX.get(p.id) || 0
+        const v1y = stepY.get(p.id) || 0
+        const v2x = stepX.get(q.id) || 0
+        const v2y = stepY.get(q.id) || 0
+
+        // Normal and tangent components
+        const v1n = v1x * nx + v1y * ny
+        const v2n = v2x * nx + v2y * ny
+        const tx = -ny
+        const ty = nx
+        const v1t = v1x * tx + v1y * ty
+        const v2t = v2x * tx + v2y * ty
+
+        // Swap normal components (equal mass), apply damping
+        const v1nPrime = v2n * lossFactor
+        const v2nPrime = v1n * lossFactor
+
+        const newV1x = v1t * tx + v1nPrime * nx
+        const newV1y = v1t * ty + v1nPrime * ny
+        const newV2x = v2t * tx + v2nPrime * nx
+        const newV2y = v2t * ty + v2nPrime * ny
+
+        stepX.set(p.id, newV1x)
+        stepY.set(p.id, newV1y)
+        stepX.set(q.id, newV2x)
+        stepY.set(q.id, newV2y)
+
+        // Positional correction to remove overlap
+        const corr = overlap * 0.5
+        p.x -= nx * corr
+        p.y -= ny * corr
+        q.x += nx * corr
+        q.y += ny * corr
+      }
+    }
+
+    // 5) Enforce boundaries
+    for (const p of active) {
+      if (p.y < 0) p.y += this.Ly
+      if (p.y > this.Ly) p.y -= this.Ly
+      if (p.x < 0) p.x = 0
+      if (p.x > this.Lx) p.x = this.Lx
+    }
   }
+
+  // Legacy force calculation removed by simplified physics
 
   /**
    * Spawns a constant number of new energy particles from the left edge on each step.
    */
   private handleEnergyInflow(): void {
-    // Spawn 'energyInflowRate' new particles each step to create a constant stream.
-    for (let i = 0; i < this.params.energyInflowRate; i++) {
+    for (let i = 0; i < this.energyInflowPerTick; i++) {
       const x = Math.random() * 20; // Spawn in a narrow strip on the far left
       const y = Math.random() * this.Ly;
       this.energyParticles.set(this.nextId, new EnergyParticle(this.nextId, x, y));
@@ -234,14 +323,14 @@ export class Simulation {
         const p2 = activeParticles[j];
 
         const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
-
-        if (dist < this.params.reactionRadius) {
+        const reactionRadius = this.params.particleRadius * 2;
+        if (dist < reactionRadius) {
           // Find a nearby energy particle to power the reaction
           for (const energy of activeEnergy) {
             if (!energy.active) continue;
 
             const distE = Math.hypot(p1.x - energy.x, p1.y - energy.y);
-            if (distE < this.params.reactionRadius) {
+            if (distE < reactionRadius) {
               this.attemptReaction(p1, p2, energy);
               // An energy particle can only power one reaction per step
               break;
@@ -262,7 +351,7 @@ export class Simulation {
 
     // --- Reaction Discovery ---
     if (!reaction) {
-      if (Math.random() < this.params.reactionDiscoveryProbability) {
+      if (Math.random() < this.reactionDiscoveryProbability) {
         reaction = this.discoverNewReaction(p1.type, p2.type);
         this.reactionCatalog.set(reactionKey, reaction);
       } else {
@@ -321,7 +410,7 @@ export class Simulation {
     // Create the two new product particles near the catalyst.
     const createProduct = (productType: ParticleType) => {
       const angle = Math.random() * 2 * Math.PI;
-      const distance = this.params.particleDiameter * (1.5 + Math.random() * 2.0); // "Birth kick"
+      const distance = this.params.particleRadius * 2 * (1.5 + Math.random() * 2.0); // birth kick scaled by 2r
       const newX = catalyst.x + Math.cos(angle) * distance;
       const newY = catalyst.y + Math.sin(angle) * distance;
       

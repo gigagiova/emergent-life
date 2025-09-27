@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import type {
   SimulationParams,
   SimulationState,
-  WorkerCommand,
+  WorkerCommand
 } from '../simulation/types.js'
 
 // Initialize the simulation worker.
@@ -31,7 +31,7 @@ interface SimulationStore {
   setParams: (newParams: Partial<SimulationParams>) => void
 }
 
-// Default simulation parameters for autocatalytic system
+// Default simulation parameters for simplified physics model
 const defaultParams: SimulationParams = {
   // World dimensions
   Lx: 800,
@@ -45,27 +45,15 @@ const defaultParams: SimulationParams = {
   particleCountBinder: 20,
   energyParticleCount: 250,
   
-  // Particle properties
-  particleDiameter: 8,
+  // Simplified physics parameters
+  particleRadius: 4,
+  randomStepMagnitudeX: 1.5,
+  collisionEnergyLossPct: 20,
+  binderForceUnitDistanceInR: 4,
   
-  // Dynamics
-  timeStep: 0.02,
-  diffusionCoefficient: 5, // Increased random motion
-  energyFlowVelocity: 80, // Faster base speed for energy
-  energyInflowRate: 4,           // Energy particles spawned per inflow event
-  energyTurbulence: 0.5, // Significant vertical motion
-  
-  // Physics & Lifespan
-  primordialWindStrength: 0.02, // A gentle but constant outward push
-  windShelterRadius: 30, // 2x reaction radius
-  binderAttractionForce: 40, // Drastically increased to overcome diffusion
-  substrateRepulsionForce: 50, // Drastically increased to ensure spreading
-  particleLifespan: 600, // Shorter lifespan increases pressure
-  
-  // Reactions
-  reactionRadius: 15,            // How close particles need to be to react
-  reactionDiscoveryProbability: 0.001, // Very low chance to discover a new reaction pathway
-};
+  // Lifespan
+  particleLifespan: 600
+}
 
 export const useSimulationStore = create<SimulationStore>((set, get) => ({
   // Initial state

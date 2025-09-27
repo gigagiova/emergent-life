@@ -70,7 +70,8 @@ function SimulationCanvas() {
       const y = positions[i * 2 + 1];
       const type = types[i];
       const energy = energies[i];
-      const radius = useSimulationStore.getState().params.particleDiameter / 2;
+      // Render radius comes from the unified physics parameter
+      const radius = useSimulationStore.getState().params.particleRadius;
       
       context.beginPath();
       context.arc(x, y, radius, 0, 2 * Math.PI);
@@ -123,77 +124,46 @@ function Controls() {
 
   // Define all control configurations in a single array
   const controlConfigs: ControlConfig[] = [
-    // Dynamics section
+    // Physics section for the simplified model
     {
-      key: 'diffusionCoefficient',
-      label: 'Diffusion Coefficient',
-      min: 0.5,
-      max: 10,
+      key: 'particleRadius',
+      label: 'Particle Radius',
+      min: 2,
+      max: 12,
+      step: 1,
+      formatter: (value) => value.toString(),
+      parser: parseInt,
+      section: 'Physics'
+    },
+    {
+      key: 'randomStepMagnitudeX',
+      label: 'Random Step X',
+      min: 0.1,
+      max: 5,
       step: 0.1,
       formatter: (value) => value.toFixed(1),
       parser: parseFloat,
-      section: 'Dynamics'
+      section: 'Physics'
     },
     {
-      key: 'energyFlowVelocity',
-      label: 'Energy Flow Velocity',
-      min: 5,
-      max: 100,
+      key: 'collisionEnergyLossPct',
+      label: 'Collision Loss %',
+      min: 0,
+      max: 90,
       step: 1,
-      formatter: (value) => value.toFixed(0),
+      formatter: (value) => value.toFixed(0) + '%',
       parser: parseFloat,
-      section: 'Dynamics'
+      section: 'Physics'
     },
     {
-      key: 'energyInflowRate',
-      label: 'Energy Inflow Rate',
-      min: 1,
+      key: 'binderForceUnitDistanceInR',
+      label: 'Binder Unit Dist (r)',
+      min: 2,
       max: 10,
       step: 1,
-      formatter: (value) => value.toString(),
+      formatter: (value) => value.toString() + ' r',
       parser: parseInt,
-      section: 'Dynamics'
-    },
-    // Physics & Lifespan section
-    {
-      key: 'primordialWindStrength',
-      label: 'Primordial Wind',
-      min: 0,
-      max: 0.1,
-      step: 0.001,
-      formatter: (value) => value.toFixed(3),
-      parser: parseFloat,
-      section: 'Physics & Lifespan'
-    },
-    {
-      key: 'windShelterRadius',
-      label: 'Wind Shelter Radius',
-      min: 10,
-      max: 100,
-      step: 1,
-      formatter: (value) => value.toString(),
-      parser: parseInt,
-      section: 'Physics & Lifespan'
-    },
-    {
-      key: 'binderAttractionForce',
-      label: 'Binder Attraction',
-      min: 0,
-      max: 1,
-      step: 0.01,
-      formatter: (value) => value.toFixed(2),
-      parser: parseFloat,
-      section: 'Physics & Lifespan'
-    },
-    {
-      key: 'substrateRepulsionForce',
-      label: 'Substrate Repulsion',
-      min: 0,
-      max: 1,
-      step: 0.01,
-      formatter: (value) => value.toFixed(2),
-      parser: parseFloat,
-      section: 'Physics & Lifespan'
+      section: 'Physics'
     },
     {
       key: 'particleLifespan',
@@ -203,28 +173,7 @@ function Controls() {
       step: 50,
       formatter: (value) => value.toString(),
       parser: parseInt,
-      section: 'Physics & Lifespan'
-    },
-    // Reactions section
-    {
-      key: 'reactionRadius',
-      label: 'Reaction Radius',
-      min: 5,
-      max: 30,
-      step: 1,
-      formatter: (value) => value.toFixed(0),
-      parser: parseFloat,
-      section: 'Reactions'
-    },
-    {
-      key: 'reactionDiscoveryProbability',
-      label: 'Discovery Probability',
-      min: 0,
-      max: 0.01,
-      step: 0.0001,
-      formatter: (value) => value.toFixed(4),
-      parser: parseFloat,
-      section: 'Reactions'
+      section: 'Physics'
     }
   ];
 
