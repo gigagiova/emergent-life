@@ -19,7 +19,9 @@ export const ParticleType = {
   C: 2,
   D: 3,
   Binder: 4, // The special "sticky" particle
-  Energy: 5,
+  Attractor: 5, // Advanced particle that pulls in energy
+  E: 6,
+  Energy: 7,
 } as const;
 export type ParticleType = typeof ParticleType[keyof typeof ParticleType];
 
@@ -48,6 +50,7 @@ export interface SimulationParams {
   particleCountB: number;
   particleCountC: number;
   particleCountD: number;
+  particleCountE: number;
   particleCountBinder: number;
   energyParticleCount: number;
   
@@ -61,6 +64,7 @@ export interface SimulationParams {
   binderQuorumSoftCap: number; // Soft cap for binders within quorum radius
   energyPulsePeriodFrames: number; // Period of energy inflow pulses (frames)
   current: number; // Rightward bias applied to substrate step per tick (pixels)
+  attractorForceUnitDistanceInR: number; // N radii where energy pull magnitude equals baseline
   
   // Lifespan
   particleLifespan: number; // In simulation steps
@@ -79,6 +83,8 @@ export interface SimulationState {
     particleCountB: number;
     particleCountC: number;
     particleCountD: number;
+    particleCountAttractor: number;
+    particleCountE: number;
     particleCountBinder: number;
     energyParticleCount: number;
     totalReactions: number;

@@ -41,8 +41,9 @@ const defaultParams: SimulationParams = {
   particleCountA: 50,
   particleCountB: 50,
   particleCountC: 50,
-  particleCountD: 50,
-  particleCountBinder: 20,
+  particleCountD: 0,
+  particleCountE: 0,
+  particleCountBinder: 10,
   energyParticleCount: 250,
   
   // Simplified physics parameters
@@ -54,7 +55,8 @@ const defaultParams: SimulationParams = {
   binderQuorumRadiusInR: 6,
   binderQuorumSoftCap: 8,
   energyPulsePeriodFrames: 1000,
-  current: 0.2,
+  current: 0.4,
+  attractorForceUnitDistanceInR: 5,
   
   // Lifespan
   particleLifespan: 1100

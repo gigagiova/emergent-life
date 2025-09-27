@@ -86,6 +86,10 @@ function SimulationCanvas() {
         context.fillStyle = `rgba(200, 50, 255, ${Math.max(0.3, energy)})`; // Purple
       } else if (type === ParticleType.Binder) {
         context.fillStyle = `rgba(200, 200, 200, ${Math.max(0.3, energy)})`; // White/Gray
+      } else if (type === ParticleType.Attractor) {
+        context.fillStyle = `rgba(255, 200, 50, ${Math.max(0.4, energy)})`; // Orange-gold for attractor
+      } else if (type === ParticleType.E) {
+        context.fillStyle = `rgba(255, 150, 200, ${Math.max(0.4, energy)})`; // Pinkish for E
       } else if (type === ParticleType.Energy) {
         context.fillStyle = 'rgba(255, 255, 100, 0.9)';
       }
@@ -144,6 +148,16 @@ function Controls() {
       formatter: (value) => value.toFixed(2),
       parser: parseFloat,
       section: 'Physics'
+    },
+    {
+      key: 'attractorForceUnitDistanceInR',
+      label: 'Attractor Unit Dist (r)',
+      min: 2,
+      max: 16,
+      step: 1,
+      formatter: (value) => value.toString() + ' r',
+      parser: parseInt,
+      section: 'Reactions'
     },
     {
       key: 'energyPulsePeriodFrames',
@@ -253,6 +267,8 @@ function Controls() {
         <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(255, 50, 50)' }}></span>B Particles: {stats.particleCountB || 0}</p>
         <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(50, 255, 50)' }}></span>C Particles: {stats.particleCountC || 0}</p>
         <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(200, 50, 255)' }}></span>D Particles: {stats.particleCountD || 0}</p>
+        <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(255, 200, 50)' }}></span>Attractors: {stats.particleCountAttractor || 0}</p>
+        <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(255, 150, 200)' }}></span>E Particles: {stats.particleCountE || 0}</p>
         <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(200, 200, 200)' }}></span>Binder Particles: {stats.particleCountBinder || 0}</p>
         <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(255, 255, 100)' }}></span>Energy: {stats.energyParticleCount || 0}</p>
         <p>Total Reactions: {stats.totalReactions || 0}</p>

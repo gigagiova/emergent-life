@@ -62,6 +62,7 @@ export class Simulation {
     this.createInitialParticles(ParticleType.B, this.params.particleCountB);
     this.createInitialParticles(ParticleType.C, this.params.particleCountC);
     this.createInitialParticles(ParticleType.D, this.params.particleCountD);
+    this.createInitialParticles(ParticleType.E, this.params.particleCountE);
     this.createInitialParticles(ParticleType.Binder, this.params.particleCountBinder);
 
     // Create initial energy particles
@@ -93,21 +94,55 @@ export class Simulation {
       })
     }
 
-    // Autocatalytic base loops: each pair replicates one member
-    add(ParticleType.A, ParticleType.B, ParticleType.A, ParticleType.A, ParticleType.A, 0.5)
-    add(ParticleType.B, ParticleType.C, ParticleType.B, ParticleType.B, ParticleType.B, 0.5)
-    add(ParticleType.C, ParticleType.D, ParticleType.C, ParticleType.C, ParticleType.C, 0.5)
-    add(ParticleType.D, ParticleType.A, ParticleType.D, ParticleType.D, ParticleType.D, 0.5)
+    // D-centered pathways and membrane-gated replication with reduced B dominance
+    // Base detours and gentle loops: avoid direct D self-maintenance, bias toward C/D via non-D catalysts
+    add(ParticleType.A, ParticleType.B, ParticleType.A, ParticleType.Binder, ParticleType.B, 0.18) // Shift A+B to Binder+B, weaker A presence
+    add(ParticleType.B, ParticleType.C, ParticleType.B, ParticleType.B, ParticleType.D, 0.16) // Slightly easier D via B+C
+    // Removed explicit C+D -> 2C to curb C runaway (C+D handled by Attractor route below)
+    // Removed D+A -> D+A to prevent D persistence via D involvement
+    // Note: A+C reserved for binder production below (no duplicate per pair)
 
-    // Cross-pair binder production pathways to promote membranes
-    add(ParticleType.A, ParticleType.C, ParticleType.A, ParticleType.Binder, ParticleType.A, 0.3)
-    add(ParticleType.B, ParticleType.D, ParticleType.B, ParticleType.Binder, ParticleType.B, 0.3)
+    // Cross-pair binder production pathways that favor mixes including C or D (membrane seeding)
+    add(ParticleType.A, ParticleType.C, ParticleType.C, ParticleType.Binder, ParticleType.C, 0.32)
+    add(ParticleType.B, ParticleType.D, ParticleType.D, ParticleType.Binder, ParticleType.D, 0.24)
 
-    // Binder-catalyzed replication favors growth inside/near membranes
-    add(ParticleType.A, ParticleType.Binder, ParticleType.Binder, ParticleType.A, ParticleType.A, 0.7)
-    add(ParticleType.B, ParticleType.Binder, ParticleType.Binder, ParticleType.B, ParticleType.B, 0.7)
-    add(ParticleType.C, ParticleType.Binder, ParticleType.Binder, ParticleType.C, ParticleType.C, 0.6)
-    add(ParticleType.D, ParticleType.Binder, ParticleType.Binder, ParticleType.D, ParticleType.D, 0.6)
+    // Near D, encourage binder rather than D amplification
+    add(ParticleType.D, ParticleType.A, ParticleType.A, ParticleType.Binder, ParticleType.C, 0.10)
+
+    // Make C easier to come by through more complex catalysts involving E
+    add(ParticleType.A, ParticleType.E, ParticleType.E, ParticleType.C, ParticleType.Binder, 0.20) // Convert A into C+Binder
+    add(ParticleType.B, ParticleType.E, ParticleType.E, ParticleType.C, ParticleType.B, 0.20) // E helps convert B into C
+    add(ParticleType.D, ParticleType.E, ParticleType.E, ParticleType.C, ParticleType.E, 0.12) // rare D+E -> C
+
+    // Make B easier to obtain without enabling runaway dominance
+    add(ParticleType.A, ParticleType.A, ParticleType.A, ParticleType.B, ParticleType.A, 0.18) // simple detour to B
+
+    // Advanced attractor production (rarer, helps draw energy)
+    add(ParticleType.C, ParticleType.D, ParticleType.C, ParticleType.Attractor, ParticleType.C, 0.14) // no D as catalyst here
+    add(ParticleType.D, ParticleType.Binder, ParticleType.D, ParticleType.Attractor, ParticleType.D, 0.16) // allowed: uses D but does NOT create D
+    add(ParticleType.C, ParticleType.Attractor, ParticleType.Attractor, ParticleType.D, ParticleType.C, 0.10) // attractor-assisted D formation
+    add(ParticleType.A, ParticleType.Attractor, ParticleType.Attractor, ParticleType.D, ParticleType.A, 0.08) // another advanced D path
+    // Complex E-production routes using Attractor contexts
+    add(ParticleType.B, ParticleType.Attractor, ParticleType.Attractor, ParticleType.E, ParticleType.B, 0.12)
+    add(ParticleType.Binder, ParticleType.Attractor, ParticleType.Attractor, ParticleType.E, ParticleType.Binder, 0.14)
+    // E-mediated Attractor production made stronger to reward complex metabolisms
+    add(ParticleType.A, ParticleType.E, ParticleType.E, ParticleType.Attractor, ParticleType.A, 0.18)
+    add(ParticleType.B, ParticleType.E, ParticleType.E, ParticleType.Attractor, ParticleType.B, 0.18)
+    add(ParticleType.C, ParticleType.E, ParticleType.E, ParticleType.Attractor, ParticleType.C, 0.20)
+    add(ParticleType.Binder, ParticleType.E, ParticleType.E, ParticleType.Attractor, ParticleType.Binder, 0.24)
+
+    // Binder-catalyzed replication emphasizes A/C over B; D is NOT autocatalytic via binder
+    add(ParticleType.A, ParticleType.Binder, ParticleType.Binder, ParticleType.A, ParticleType.A, 0.48)
+    add(ParticleType.B, ParticleType.Binder, ParticleType.Binder, ParticleType.B, ParticleType.B, 0.48) // modest boost for B utility
+    // Convert some C near membranes into B rather than 2C to disadvantage C and feed B
+    add(ParticleType.C, ParticleType.Binder, ParticleType.Binder, ParticleType.B, ParticleType.Binder, 0.22)
+    // Removed D+Binder -> D+D to ensure D cannot self-amplify; D growth must come from non-D routes
+
+    // Self-limiting B to prevent monocultures (excess B recycles into A and Binder)
+    add(ParticleType.B, ParticleType.B, ParticleType.B, ParticleType.A, ParticleType.Binder, 0.40)
+
+    // Additional complex D routes that avoid D autocatalysis
+    add(ParticleType.B, ParticleType.Binder, ParticleType.Binder, ParticleType.D, ParticleType.B, 0.08) // binder-assisted D from B pools
   }
 
   /** Helper to create initial substrate particles */
@@ -139,11 +174,40 @@ export class Simulation {
       if (p.active) p.update(this.frameCount, this.params.particleLifespan)
     }
 
-    // Update energy particles simple flow
+    // Update energy particles with simple flow plus attraction toward D and Attractor
     for (const e of this.energyParticles.values()) {
       if (!e.active) continue
-      e.x += this.energyFlowVelocity * 1.0 / 60.0
-      e.y += (Math.random() - 0.5) * this.energyTurbulence
+
+      // Baseline flow/turbulence
+      const vx = this.energyFlowVelocity * 1.0 / 60.0
+      const vy = (Math.random() - 0.5) * this.energyTurbulence
+
+      // Find nearest attractor: D or Attractor particles, pull inverse-square normalized to unit at N*r
+      const r = this.params.particleRadius
+      const unitDist = this.params.attractorForceUnitDistanceInR * r
+      let ax = 0
+      let ay = 0
+      let bestDist = Infinity
+      for (const p of this.particles.values()) {
+        if (!p.active) continue
+        if (p.type !== ParticleType.Attractor) continue
+        const dx = p.x - e.x
+        const dy = p.y - e.y
+        const d = Math.hypot(dx, dy)
+        if (d < bestDist && d > 1e-6) {
+          bestDist = d
+          const dClamped = Math.max(d, 2 * r)
+          const mag = Math.pow(unitDist / dClamped, 2)
+          const ux = dx / d
+          const uy = dy / d
+          ax = ux * mag
+          ay = uy * mag
+        }
+      }
+
+      e.x += vx + ax
+      e.y += vy + ay
+
       if (e.y < 0) e.y += this.Ly
       if (e.y > this.Ly) e.y -= this.Ly
       if (e.x > this.Lx) e.active = false
@@ -535,6 +599,8 @@ export class Simulation {
         particleCountB: counts[ParticleType.B] || 0,
         particleCountC: counts[ParticleType.C] || 0,
         particleCountD: counts[ParticleType.D] || 0,
+        particleCountAttractor: counts[ParticleType.Attractor] || 0,
+        particleCountE: counts[ParticleType.E] || 0,
         particleCountBinder: counts[ParticleType.Binder] || 0,
         energyParticleCount: activeEnergy.length,
         totalReactions: this.totalReactions,
