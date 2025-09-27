@@ -217,11 +217,12 @@ export class Simulation {
     if (active.length === 0) return
 
     const r = this.params.particleRadius
+    // Distance scale for binder attraction measured in radii
     const binderRange = this.params.binderForceUnitDistanceInR * r
-    const quorumRange = this.params.binderQuorumRadiusInR * r
 
     // Spatial hash grid for neighbor queries
-    const cellSize = Math.max(2 * r, binderRange, quorumRange)
+    // Use max of diameter and binder interaction range for cell size
+    const cellSize = Math.max(2 * r, binderRange)
     const grid = new Map<string, SubstrateParticle[]>()
     const cellKey = (x: number, y: number) => `${Math.floor(x / cellSize)}:${Math.floor(y / cellSize)}`
 
@@ -271,22 +272,10 @@ export class Simulation {
 
     // 2) Binder attraction inverse-square, normalized to X at N radii
     for (const p of active) {
-      const neighbors = getNeighbors(p.x, p.y, Math.max(binderRange, quorumRange))
-      // Count local binders within quorum range for density attenuation
-      let localBinderCount = 0
-      if (p.type !== ParticleType.Binder) {
-        for (const q of neighbors) {
-          if (q.type === ParticleType.Binder) {
-            const dxq = q.x - p.x
-            const dyq = q.y - p.y
-            const dq = Math.hypot(dxq, dyq)
-            if (dq <= quorumRange) localBinderCount++
-          }
-        }
-      }
-      // Compute attenuation factor: 1 / (1 + n / softCap)
-      const quorumCap = Math.max(1, this.params.binderQuorumSoftCap)
-      const attenuation = 1 / (1 + localBinderCount / quorumCap)
+      // Query neighbors within binder interaction range only
+      const neighbors = getNeighbors(p.x, p.y, binderRange)
+      // Quorum attenuation removed: binder attraction is unattenuated by local density
+      const attenuation = 1
       for (const q of neighbors) {
         if (p.id === q.id) continue
         if (q.type !== ParticleType.Binder) continue
@@ -566,21 +555,21 @@ export class Simulation {
 
     const positions = new Float32Array(totalParticles * 2);
     const types = new Uint8Array(totalParticles);
-    const energies = new Float32Array(totalParticles);
+    // Energies removed from render state for simplicity
 
     let i = 0;
     for (const p of activeParticles) {
       positions[i * 2] = p.x;
       positions[i * 2 + 1] = p.y;
       types[i] = p.type;
-      energies[i] = p.energy;
+      // energy value no longer exported
       i++;
     }
     for (const p of activeEnergy) {
       positions[i * 2] = p.x;
       positions[i * 2 + 1] = p.y;
       types[i] = ParticleType.Energy;
-      energies[i] = 1.0;
+      // energy value no longer exported
       i++;
     }
 
@@ -593,7 +582,7 @@ export class Simulation {
     return {
       positions,
       types,
-      energies,
+      // energies removed
       stats: {
         frameCount: this.frameCount,
         particleCountA: counts[ParticleType.A] || 0,

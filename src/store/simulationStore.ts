@@ -52,8 +52,6 @@ const defaultParams: SimulationParams = {
   collisionEnergyLossPct: 20,
   binderForceUnitDistanceInR: 4,
   reactionDistanceInR: 3,
-  binderQuorumRadiusInR: 6,
-  binderQuorumSoftCap: 8,
   energyPulsePeriodFrames: 1000,
   current: 0.4,
   attractorForceUnitDistanceInR: 5,

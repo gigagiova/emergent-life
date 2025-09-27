@@ -60,8 +60,6 @@ export interface SimulationParams {
   collisionEnergyLossPct: number; // Percentage energy loss in non-binder collisions
   binderForceUnitDistanceInR: number; // N radii distance where binder force equals X
   reactionDistanceInR: number; // Distance in radii where reactions can occur
-  binderQuorumRadiusInR: number; // Radius in r for local binder-density estimation
-  binderQuorumSoftCap: number; // Soft cap for binders within quorum radius
   energyPulsePeriodFrames: number; // Period of energy inflow pulses (frames)
   current: number; // Rightward bias applied to substrate step per tick (pixels)
   attractorForceUnitDistanceInR: number; // N radii where energy pull magnitude equals baseline
@@ -76,7 +74,6 @@ export interface SimulationParams {
 export interface SimulationState {
   positions: Float32Array;    // [x1, y1, x2, y2, ...]
   types: Uint8Array;          // ParticleType for each particle
-  energies: Float32Array;     // Energy level for each particle (for visualization)
   stats: {
     frameCount: number;
     particleCountA: number;

@@ -41,7 +41,6 @@ function tick(): void {
       [
         state.positions.buffer,
         state.types.buffer,
-        state.energies.buffer,
       ]
     );
 

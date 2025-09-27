@@ -62,14 +62,13 @@ function SimulationCanvas() {
     context.fillStyle = '#1a1a1a';
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    const { positions, types, energies } = simulationState;
+    const { positions, types } = simulationState;
 
     // Draw Particles
     for (let i = 0; i < positions.length / 2; i++) {
       const x = positions[i * 2];
       const y = positions[i * 2 + 1];
       const type = types[i];
-      const energy = energies[i];
       // Render radius comes from the unified physics parameter
       const radius = useSimulationStore.getState().params.particleRadius;
       
@@ -101,19 +100,19 @@ function SimulationCanvas() {
         context.arc(x, y, radius, 0, 2 * Math.PI)
         
         if (type === ParticleType.A) {
-          context.fillStyle = `rgba(50, 100, 255, ${Math.max(0.3, energy)})` // Blue
+          context.fillStyle = `rgba(50, 100, 255, 0.9)` // Blue
         } else if (type === ParticleType.B) {
-          context.fillStyle = `rgba(255, 50, 50, ${Math.max(0.3, energy)})` // Red
+          context.fillStyle = `rgba(255, 50, 50, 0.9)` // Red
         } else if (type === ParticleType.C) {
-          context.fillStyle = `rgba(50, 255, 50, ${Math.max(0.3, energy)})` // Green
+          context.fillStyle = `rgba(50, 255, 50, 0.9)` // Green
         } else if (type === ParticleType.D) {
-          context.fillStyle = `rgba(200, 50, 255, ${Math.max(0.3, energy)})` // Purple
+          context.fillStyle = `rgba(200, 50, 255, 0.9)` // Purple
         } else if (type === ParticleType.Binder) {
-          context.fillStyle = `rgba(200, 200, 200, ${Math.max(0.3, energy)})` // White/Gray
+          context.fillStyle = `rgba(200, 200, 200, 0.9)` // White/Gray
         } else if (type === ParticleType.Attractor) {
-          context.fillStyle = `rgba(255, 200, 50, ${Math.max(0.4, energy)})` // Orange-gold for attractor
+          context.fillStyle = `rgba(255, 200, 50, 0.9)` // Orange-gold for attractor
         } else if (type === ParticleType.E) {
-          context.fillStyle = `rgba(255, 150, 200, ${Math.max(0.4, energy)})` // Pinkish for E
+          context.fillStyle = `rgba(255, 150, 200, 0.9)` // Pinkish for E
         }
         
         context.fill()
@@ -223,26 +222,6 @@ function Controls() {
       section: 'Physics'
     },
     {
-      key: 'binderQuorumRadiusInR',
-      label: 'Quorum Radius (r)',
-      min: 2,
-      max: 16,
-      step: 1,
-      formatter: (value) => value.toString() + ' r',
-      parser: parseInt,
-      section: 'Physics'
-    },
-    {
-      key: 'binderQuorumSoftCap',
-      label: 'Quorum Soft Cap',
-      min: 1,
-      max: 24,
-      step: 1,
-      formatter: (value) => value.toString(),
-      parser: parseInt,
-      section: 'Physics'
-    },
-    {
       key: 'particleLifespan',
       label: 'Particle Lifespan',
       min: 100,
@@ -290,10 +269,10 @@ function Controls() {
         <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(255, 50, 50)' }}></span>B Particles: {stats.particleCountB || 0}</p>
         <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(50, 255, 50)' }}></span>C Particles: {stats.particleCountC || 0}</p>
         <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(200, 50, 255)' }}></span>D Particles: {stats.particleCountD || 0}</p>
-        <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(255, 200, 50)' }}></span>Attractors: {stats.particleCountAttractor || 0}</p>
         <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(255, 150, 200)' }}></span>E Particles: {stats.particleCountE || 0}</p>
         <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(200, 200, 200)' }}></span>Binder Particles: {stats.particleCountBinder || 0}</p>
-        <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(255, 255, 100)' }}></span>Energy: {stats.energyParticleCount || 0}</p>
+        <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(255, 200, 50)' }}></span>Attractor Particles: {stats.particleCountAttractor || 0}</p>
+        <p><span className="particle-color-swatch" style={{ backgroundColor: 'rgb(255, 255, 100)' }}></span>Energy Particles: {stats.energyParticleCount || 0}</p>
         <p>Total Reactions: {stats.totalReactions || 0}</p>
         <p>Discovered Reactions: {stats.discoveredReactions || 0}</p>
       </div>
