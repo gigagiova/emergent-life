@@ -20,7 +20,6 @@ export class Simulation {
   private Ly: number = 600;
 
   // Simplified physics constants not exposed
-  private readonly reactionDiscoveryProbability = 0.001;
   private readonly energyInflowPerTick = 2;
   private readonly energyFlowVelocity = 60;
   private readonly energyTurbulence = 0.4;
@@ -54,6 +53,10 @@ export class Simulation {
     this.nextId = 0;
     this.totalReactions = 0;
 
+    // Pre-populate the reaction catalog with a fixed set that
+    // encourages autocatalysis, diversity, and membrane formation
+    this.seedFixedReactions()
+
     // Create initial particles for each type based on params
     this.createInitialParticles(ParticleType.A, this.params.particleCountA);
     this.createInitialParticles(ParticleType.B, this.params.particleCountB);
@@ -68,6 +71,43 @@ export class Simulation {
       this.energyParticles.set(this.nextId, new EnergyParticle(this.nextId, x, y));
       this.nextId++;
     }
+  }
+
+  /**
+   * Seeds a fixed set of reactions with hand-picked efficiencies.
+   * Design goals:
+   * - Ensure each base substrate has at least one autocatalytic route
+   * - Provide two routes that produce binders from cross-pairs
+   * - Make binders catalyze replication to favor compartment growth
+   */
+  private seedFixedReactions(): void {
+    const add = (a: ParticleType, b: ParticleType, catalyst: ParticleType, product1: ParticleType, product2: ParticleType, efficiency: number) => {
+      const key = this.getReactionKey(a, b)
+      this.reactionCatalog.set(key, {
+        reactant1: a,
+        reactant2: b,
+        catalyst: catalyst,
+        product1: product1,
+        product2: product2,
+        efficiency: efficiency
+      })
+    }
+
+    // Autocatalytic base loops: each pair replicates one member
+    add(ParticleType.A, ParticleType.B, ParticleType.A, ParticleType.A, ParticleType.A, 0.5)
+    add(ParticleType.B, ParticleType.C, ParticleType.B, ParticleType.B, ParticleType.B, 0.5)
+    add(ParticleType.C, ParticleType.D, ParticleType.C, ParticleType.C, ParticleType.C, 0.5)
+    add(ParticleType.D, ParticleType.A, ParticleType.D, ParticleType.D, ParticleType.D, 0.5)
+
+    // Cross-pair binder production pathways to promote membranes
+    add(ParticleType.A, ParticleType.C, ParticleType.A, ParticleType.Binder, ParticleType.A, 0.3)
+    add(ParticleType.B, ParticleType.D, ParticleType.B, ParticleType.Binder, ParticleType.B, 0.3)
+
+    // Binder-catalyzed replication favors growth inside/near membranes
+    add(ParticleType.A, ParticleType.Binder, ParticleType.Binder, ParticleType.A, ParticleType.A, 0.7)
+    add(ParticleType.B, ParticleType.Binder, ParticleType.Binder, ParticleType.B, ParticleType.B, 0.7)
+    add(ParticleType.C, ParticleType.Binder, ParticleType.Binder, ParticleType.C, ParticleType.C, 0.6)
+    add(ParticleType.D, ParticleType.Binder, ParticleType.Binder, ParticleType.D, ParticleType.D, 0.6)
   }
 
   /** Helper to create initial substrate particles */
@@ -342,23 +382,14 @@ export class Simulation {
   }
 
   /**
-   * Given two substrate particles and an energy particle, attempt to either
-   * perform a known reaction or discover a new one.
+   * Given two substrate particles and an energy particle, attempt a known reaction (fixed catalog)
    */
   private attemptReaction(p1: SubstrateParticle, p2: SubstrateParticle, energy: EnergyParticle): void {
     const reactionKey = this.getReactionKey(p1.type, p2.type);
-    let reaction = this.reactionCatalog.get(reactionKey);
+    const reaction = this.reactionCatalog.get(reactionKey);
 
-    // --- Reaction Discovery ---
-    if (!reaction) {
-      if (Math.random() < this.reactionDiscoveryProbability) {
-        reaction = this.discoverNewReaction(p1.type, p2.type);
-        this.reactionCatalog.set(reactionKey, reaction);
-      } else {
-        // No reaction known, and discovery failed.
-        return;
-      }
-    }
+    // If no known reaction for this pair, nothing happens (fixed catalog)
+    if (!reaction) return;
 
     // --- Reaction Execution ---
     if (Math.random() < reaction.efficiency) {
@@ -366,27 +397,7 @@ export class Simulation {
     }
   }
 
-  /**
-   * Creates a new, random reaction and returns it.
-   */
-  private discoverNewReaction(type1: ParticleType, type2: ParticleType): Reaction {
-    const substrateTypes = [ParticleType.A, ParticleType.B, ParticleType.C, ParticleType.D, ParticleType.Binder];
-    
-    // The product can be any two substrate types.
-    const product1 = substrateTypes[Math.floor(Math.random() * substrateTypes.length)];
-    const product2 = substrateTypes[Math.floor(Math.random() * substrateTypes.length)];
-
-    return {
-      reactant1: type1,
-      reactant2: type2,
-      // The catalyst must be one of the reactants.
-      catalyst: Math.random() < 0.5 ? type1 : type2,
-      product1,
-      product2,
-      // Efficiency is randomly assigned upon discovery.
-      efficiency: Math.random() * 0.5 + 0.1, // Efficiency between 10% and 60%
-    };
-  }
+  // Random discovery removed in fixed-catalog model
 
   /**
    * Executes a reaction: consumes energy and reactant, creates two new product particles.
